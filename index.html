@@ -85,12 +85,41 @@
                     placeholder="Descrição (opcional)..."
                     class="task-description-input"
                     rows="2"></textarea>
+                <div class="task-extra-fields">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="taskIsToday">
+                        <span>⭐ Tarefa do dia</span>
+                    </label>
+                    <label class="difficulty-label">
+                        <span>🎯 Dificuldade:</span>
+                        <select id="taskDifficulty" class="difficulty-select">
+                            <option value="1">1 - Muito Fácil</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5" selected>5 - Média</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10 - Muito Difícil</option>
+                        </select>
+                    </label>
+                </div>
                 <button onclick="addLooseTask()">+ Adicionar Tarefa</button>
             </div>
             <ul id="looseTasksList" class="task-drop-zone"
                 ondragover="handleDragOver(event)"
                 ondragleave="handleDragLeave(event)"
                 ondrop="handleDrop(event, 'loose')"></ul>
+        </div>
+
+        <div class="today-tasks-card" onclick="openTodayTasks()">
+            <div class="today-card-icon">⭐</div>
+            <div class="today-card-content">
+                <h3>Tarefas do Dia</h3>
+                <p id="todayTaskCount">0 tarefas</p>
+            </div>
         </div>
 
         <div id="foldersContainer"></div>
@@ -115,6 +144,27 @@
                     placeholder="Descrição (opcional)..."
                     class="task-description-input"
                     rows="2"></textarea>
+                <div class="task-extra-fields">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="folderScreenTaskIsToday">
+                        <span>⭐ Tarefa do dia</span>
+                    </label>
+                    <label class="difficulty-label">
+                        <span>🎯 Dificuldade:</span>
+                        <select id="folderScreenTaskDifficulty" class="difficulty-select">
+                            <option value="1">1 - Muito Fácil</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5" selected>5 - Média</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10 - Muito Difícil</option>
+                        </select>
+                    </label>
+                </div>
                 <button onclick="addTaskToCurrentFolder()">+ Adicionar Tarefa</button>
             </div>
 
@@ -137,9 +187,110 @@
                     <button class="delete-btn" onclick="deleteCurrentTask()">Excluir Tarefa</button>
                 </div>
             </div>
+            
+            <div class="task-view-meta">
+                <span id="taskViewDifficulty" class="difficulty-badge"></span>
+                <span id="taskViewTodayBadge" class="today-badge" style="display: none;">⭐ Tarefa do Dia</span>
+            </div>
+            
+            <div class="task-view-options">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="taskViewIsToday" onchange="updateTaskIsToday()">
+                    <span>⭐ Marcar como Tarefa do Dia</span>
+                </label>
+                <label class="difficulty-label">
+                    <span>🎯 Dificuldade:</span>
+                    <select id="taskViewDifficultySelect" class="difficulty-select" onchange="updateTaskDifficulty()">
+                        <option value="1">1 - Muito Fácil</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5 - Média</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10 - Muito Difícil</option>
+                    </select>
+                </label>
+            </div>
+            
             <div class="task-view-description">
                 <h3>Descrição:</h3>
                 <p id="taskViewDescriptionText"></p>
+            </div>
+            
+            <div class="task-view-observations">
+                <h3>Observações / Progresso:</h3>
+                <textarea 
+                    id="taskViewObservations" 
+                    placeholder="Anote aqui o progresso da tarefa, partes concluídas, o que falta fazer..."
+                    class="observations-textarea"></textarea>
+                <button onclick="saveObservations()" class="save-obs-btn">Salvar Observações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela de Tarefas do Dia -->
+    <div class="container" id="todayTasksScreen" style="display: none;">
+        <div class="folder-header-screen">
+            <button class="back-btn" onclick="goBackToMain()">← Voltar</button>
+            <h1>⭐ Tarefas do Dia</h1>
+        </div>
+
+        <div class="today-tasks-grid" id="todayTasksGrid"></div>
+    </div>
+
+    <!-- Modal de Tarefa do Dia -->
+    <div id="todayTaskModal" class="modal">
+        <div class="modal-content modal-large">
+            <span class="close" onclick="closeTodayTaskModal()">&times;</span>
+            <div class="modal-header">
+                <h2 id="todayModalTitle"></h2>
+                <div id="todayModalBadges"></div>
+            </div>
+            
+            <div class="modal-folder" id="todayModalFolder"></div>
+            
+            <div class="modal-section">
+                <h3>Descrição:</h3>
+                <p id="todayModalDescription"></p>
+            </div>
+            
+            <div class="modal-section">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="todayModalIsToday" onchange="updateTodayTaskIsToday()">
+                    <span>⭐ Tarefa do dia</span>
+                </label>
+                <label class="difficulty-label">
+                    <span>🎯 Dificuldade:</span>
+                    <select id="todayModalDifficulty" class="difficulty-select" onchange="updateTodayTaskDifficulty()">
+                        <option value="1">1 - Muito Fácil</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5 - Média</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10 - Muito Difícil</option>
+                    </select>
+                </label>
+            </div>
+            
+            <div class="modal-section">
+                <h3>📝 Observações / Progresso:</h3>
+                <textarea 
+                    id="todayModalObservations" 
+                    placeholder="Anote aqui o progresso da tarefa, partes concluídas, o que falta fazer..."
+                    class="observations-textarea"></textarea>
+                <button onclick="saveTodayObservations()" class="save-obs-btn">Salvar Observações</button>
+            </div>
+            
+            <div class="modal-actions">
+                <button id="todayModalCompleteBtn" onclick="toggleTodayTask()" class="complete-btn">Concluir</button>
+                <button onclick="deleteTodayTask()" class="delete-btn">Excluir Tarefa</button>
             </div>
         </div>
     </div>
