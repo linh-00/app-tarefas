@@ -1,3 +1,23 @@
+// Configuração Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyA4VvSYgdAV5QMA2eXCrITvNnA5Itazld8",
+    authDomain: "tasks-1a7eb.firebaseapp.com",
+    projectId: "tasks-1a7eb",
+    storageBucket: "tasks-1a7eb.firebasestorage.app",
+    messagingSenderId: "88399420840",
+    appId: "1:88399420840:web:85ba64fdeed75233cb119d"
+};
+
+// Inicializar Firebase
+try {
+    firebase.initializeApp(firebaseConfig);
+    var db = firebase.firestore();
+    console.log('Firebase inicializado com sucesso!');
+} catch (error) {
+    console.error('Erro ao inicializar Firebase:', error);
+    var db = null;
+}
+
 // Carregar dados do localStorage
 let folders = JSON.parse(localStorage.getItem('folders')) || [];
 let looseTasks = JSON.parse(localStorage.getItem('looseTasks')) || [];
@@ -121,8 +141,38 @@ function loadUserData() {
     const userKey = `folders_${currentUser}`;
     const tasksKey = `tasks_${currentUser}`;
     
-    folders = JSON.parse(localStorage.getItem(userKey)) || [];
-    looseTasks = JSON.parse(localStorage.getItem(tasksKey)) || [];
+    if (db) {
+        // Carregar do Firebase
+        db.collection('users').doc(currentUser).get()
+            .then(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    folders = data.folders || [];
+                    looseTasks = data.looseTasks || [];
+                    console.log('Dados carregados do Firebase');
+                } else {
+                    // Fallback para localStorage
+                    folders = JSON.parse(localStorage.getItem(userKey)) || [];
+                    looseTasks = JSON.parse(localStorage.getItem(tasksKey)) || [];
+                }
+                renderFolders();
+                renderLooseTasks();
+                updateTodayCount();
+            })
+            .catch(error => {
+                console.error('Erro ao carregar do Firebase:', error);
+                // Fallback para localStorage
+                folders = JSON.parse(localStorage.getItem(userKey)) || [];
+                looseTasks = JSON.parse(localStorage.getItem(tasksKey)) || [];
+                renderFolders();
+                renderLooseTasks();
+                updateTodayCount();
+            });
+    } else {
+        // Usar apenas localStorage
+        folders = JSON.parse(localStorage.getItem(userKey)) || [];
+        looseTasks = JSON.parse(localStorage.getItem(tasksKey)) || [];
+    }
 }
 
 function saveUserData() {
@@ -131,14 +181,25 @@ function saveUserData() {
     const userKey = `folders_${currentUser}`;
     const tasksKey = `tasks_${currentUser}`;
     
+    // Sempre salvar no localStorage como backup
     localStorage.setItem(userKey, JSON.stringify(folders));
     localStorage.setItem(tasksKey, JSON.stringify(looseTasks));
+    
+    // Salvar no Firebase
+    if (db) {
+        db.collection('users').doc(currentUser).set({
+            folders: folders,
+            looseTasks: looseTasks,
+            lastUpdate: new Date().toISOString()
+        })
+        .then(() => {
+            console.log('Dados salvos no Firebase');
+        })
+        .catch(error => {
+            console.error('Erro ao salvar no Firebase:', error);
+        });
+    }
 }
-
-// Renderizar ao carregar a página
-window.onload = function() {
-    checkAuth();
-};
 
 // Navegação entre telas
 function openFolder(folderId) {
