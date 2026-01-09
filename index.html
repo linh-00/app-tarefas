@@ -65,6 +65,10 @@
             <button onclick="logout()" class="logout-btn">Sair</button>
         </div>
         
+        <div class="current-time-display">
+            <div id="currentDateTime" class="date-time-text"></div>
+        </div>
+        
         <div class="folder-section">
             <div class="input-container">
                 <input 
@@ -131,6 +135,14 @@
             <div class="today-card-content">
                 <h3>Quadro Kanban</h3>
                 <p id="kanbanTaskCount">0 tarefas em fluxo</p>
+            </div>
+        </div>
+
+        <div class="today-tasks-card" onclick="openDashboard()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <div class="today-card-icon">📈</div>
+            <div class="today-card-content">
+                <h3>Dashboard</h3>
+                <p>Métricas e rendimento</p>
             </div>
         </div>
 
@@ -251,6 +263,98 @@
                 
                 <h3 style="margin-top: 20px;">💬 Comentários Anteriores:</h3>
                 <div id="taskViewCommentsList" style="max-height: 200px; overflow-y: auto;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela Dashboard -->
+    <div class="container" id="dashboardScreen" style="display: none;">
+        <div class="folder-header-screen">
+            <button class="back-btn" onclick="goBackToMain()">← Voltar</button>
+            <h1>📈 Dashboard - Métricas e Rendimento</h1>
+        </div>
+
+        <!-- Filtros -->
+        <div class="dashboard-filters">
+            <label class="filter-label">
+                <span>📁 Filtrar por:</span>
+                <select id="dashboardFilter" class="dashboard-select" onchange="renderDashboard()">
+                    <option value="all">Todas as Tarefas</option>
+                    <option value="loose">Tarefas Soltas</option>
+                </select>
+            </label>
+        </div>
+
+        <!-- Métricas de Rendimento -->
+        <div class="metrics-container">
+            <div class="metric-card">
+                <div class="metric-icon">📅</div>
+                <div class="metric-content">
+                    <h3>Hoje</h3>
+                    <p id="metricToday" class="metric-value">0</p>
+                    <span class="metric-label">tarefas concluídas</span>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-icon">📊</div>
+                <div class="metric-content">
+                    <h3>Esta Semana</h3>
+                    <p id="metricWeek" class="metric-value">0</p>
+                    <span class="metric-label">tarefas concluídas</span>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-icon">⭐</div>
+                <div class="metric-content">
+                    <h3>Média Diária</h3>
+                    <p id="metricAverage" class="metric-value">0</p>
+                    <span class="metric-label">tarefas/dia</span>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-icon">🎯</div>
+                <div class="metric-content">
+                    <h3>Total Geral</h3>
+                    <p id="metricTotal" class="metric-value">0</p>
+                    <span class="metric-label">tarefas cadastradas</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico de Etapas (Prédio) -->
+        <div class="chart-section">
+            <h2>📊 Tarefas por Etapa</h2>
+            <div class="building-chart" id="buildingChart">
+                <div class="chart-column">
+                    <div class="chart-bar" id="barPending" data-count="0" style="background: #6c757d;">
+                        <span class="bar-count">0</span>
+                    </div>
+                    <div class="chart-label">📋 Pendente</div>
+                </div>
+                
+                <div class="chart-column">
+                    <div class="chart-bar" id="barAwaiting" data-count="0" style="background: #ffc107;">
+                        <span class="bar-count">0</span>
+                    </div>
+                    <div class="chart-label">⏳ Aguardando</div>
+                </div>
+                
+                <div class="chart-column">
+                    <div class="chart-bar" id="barApproved" data-count="0" style="background: #17a2b8;">
+                        <span class="bar-count">0</span>
+                    </div>
+                    <div class="chart-label">✅ Aprovada</div>
+                </div>
+                
+                <div class="chart-column">
+                    <div class="chart-bar" id="barCompleted" data-count="0" style="background: #28a745;">
+                        <span class="bar-count">0</span>
+                    </div>
+                    <div class="chart-label">🎉 Concluída</div>
+                </div>
             </div>
         </div>
     </div>

@@ -89,6 +89,7 @@ function showMainScreen() {
     document.getElementById('folderScreen').style.display = 'none';
     document.getElementById('taskViewScreen').style.display = 'none';
     document.getElementById('todayTasksScreen').style.display = 'none';
+    updateDateTime();
 }
 
 function login() {
@@ -254,9 +255,11 @@ function goBackToMain() {
     document.getElementById('taskViewScreen').style.display = 'none';
     document.getElementById('todayTasksScreen').style.display = 'none';
     document.getElementById('kanbanScreen').style.display = 'none';
+    document.getElementById('dashboardScreen').style.display = 'none';
     renderFolders();
     renderLooseTasks();
     updateTodayCount();
+    updateDateTime();
 }
 
 function openTodayTasks() {
@@ -485,6 +488,12 @@ function toggleTodayTask() {
         task = looseTasks.find(t => t.id === currentTaskId);
         if (task) {
             task.completed = !task.completed;
+            if (task.completed && !task.completedDate) {
+                task.completedDate = new Date().toISOString();
+                recordTaskCompletion();
+            } else if (!task.completed) {
+                task.completedDate = null;
+            }
             saveData();
         }
     } else {
@@ -495,6 +504,12 @@ function toggleTodayTask() {
             task = folder.tasks.find(t => t.id === currentTaskId);
             if (task) {
                 task.completed = !task.completed;
+                if (task.completed && !task.completedDate) {
+                    task.completedDate = new Date().toISOString();
+                    recordTaskCompletion();
+                } else if (!task.completed) {
+                    task.completedDate = null;
+                }
                 saveData();
             }
         }
@@ -730,8 +745,14 @@ function toggleCurrentTask() {
         const task = looseTasks.find(t => t.id === currentTaskId);
         if (task) {
             task.completed = !task.completed;
+            if (task.completed && !task.completedDate) {
+                task.completedDate = new Date().toISOString();
+                recordTaskCompletion();
+            } else if (!task.completed) {
+                task.completedDate = null;
+            }
             saveData();
-            openTaskFromToday('loose', currentTaskId); // Atualiza a visualização
+            openTaskFromToday('loose', currentTaskId);
             updateTodayCount();
         }
     } else {
@@ -740,8 +761,14 @@ function toggleCurrentTask() {
         
         if (task) {
             task.completed = !task.completed;
+            if (task.completed && !task.completedDate) {
+                task.completedDate = new Date().toISOString();
+                recordTaskCompletion();
+            } else if (!task.completed) {
+                task.completedDate = null;
+            }
             saveData();
-            openTask(currentTaskId); // Atualiza a visualização
+            openTask(currentTaskId);
             updateTodayCount();
         }
     }
@@ -1410,8 +1437,13 @@ function updateTaskStatus(folderId, taskId, newStatus) {
         // Se for concluída, marcar como completed também
         if (newStatus === 'completed') {
             task.completed = true;
+            if (!task.completedDate) {
+                task.completedDate = new Date().toISOString();
+                recordTaskCompletion();
+            }
         } else {
             task.completed = false;
+            task.completedDate = null;
         }
         
         saveData();
@@ -1463,6 +1495,185 @@ function openTaskFromKanban(folderId, taskId) {
         
         openTask(taskId);
         document.getElementById('kanbanScreen').style.display = 'none';
+    }
+}
+
+// ========== DASHBOARD E MÉTRICAS ==========
+
+function updateDateTime() {
+    const now = new Date();
+    const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    };
+    const dateTimeString = now.toLocaleDateString('pt-BR', options);
+    
+    const dateTimeEl = document.getElementById('currentDateTime');
+    if (dateTimeEl) {
+        dateTimeEl.textContent = dateTimeString;
+    }
+}
+
+// Atualizar relógio a cada minuto
+setInterval(updateDateTime, 60000);
+
+function openDashboard() {
+    document.getElementById('mainScreen').style.display = 'none';
+    document.getElementById('dashboardScreen').style.display = 'block';
+    
+    // Adicionar opções de pastas ao filtro
+    const filterSelect = document.getElementById('dashboardFilter');
+    const currentOptions = filterSelect.querySelectorAll('option').length;
+    
+    // Limpar opções antigas de pastas (manter apenas "Todas" e "Soltas")
+    while (filterSelect.options.length > 2) {
+        filterSelect.remove(2);
+    }
+    
+    // Adicionar pastas
+    folders.forEach(folder => {
+        const option = document.createElement('option');
+        option.value = `folder_${folder.id}`;
+        option.textContent = `📁 ${folder.name}`;
+        filterSelect.appendChild(option);
+    });
+    
+    renderDashboard();
+}
+
+function renderDashboard() {
+    const filter = document.getElementById('dashboardFilter').value;
+    let tasksToAnalyze = [];
+    
+    if (filter === 'all') {
+        // Todas as tarefas
+        tasksToAnalyze = [...looseTasks];
+        folders.forEach(folder => {
+            tasksToAnalyze = tasksToAnalyze.concat(folder.tasks);
+        });
+    } else if (filter === 'loose') {
+        // Apenas tarefas soltas
+        tasksToAnalyze = [...looseTasks];
+    } else if (filter.startsWith('folder_')) {
+        // Pasta específica
+        const folderId = parseInt(filter.replace('folder_', ''));
+        const folder = folders.find(f => f.id === folderId);
+        if (folder) {
+            tasksToAnalyze = [...folder.tasks];
+        }
+    }
+    
+    // Calcular estatísticas por status
+    const stats = {
+        pending: 0,
+        awaiting_approval: 0,
+        approved: 0,
+        completed: 0
+    };
+    
+    tasksToAnalyze.forEach(task => {
+        const status = task.status || 'pending';
+        if (stats.hasOwnProperty(status)) {
+            stats[status]++;
+        }
+    });
+    
+    // Atualizar gráfico de prédio
+    updateBuildingChart(stats);
+    
+    // Calcular métricas de rendimento
+    calculateMetrics(tasksToAnalyze);
+}
+
+function updateBuildingChart(stats) {
+    const maxCount = Math.max(stats.pending, stats.awaiting_approval, stats.approved, stats.completed, 1);
+    
+    // Atualizar cada barra
+    updateBar('barPending', stats.pending, maxCount);
+    updateBar('barAwaiting', stats.awaiting_approval, maxCount);
+    updateBar('barApproved', stats.approved, maxCount);
+    updateBar('barCompleted', stats.completed, maxCount);
+}
+
+function updateBar(barId, count, maxCount) {
+    const bar = document.getElementById(barId);
+    const percentage = (count / maxCount) * 100;
+    const height = Math.max(percentage, 10); // Mínimo 10% para visibilidade
+    
+    bar.style.height = `${height}%`;
+    bar.querySelector('.bar-count').textContent = count;
+    bar.dataset.count = count;
+}
+
+function calculateMetrics(tasks) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - today.getDay());
+    
+    // Tarefas concluídas hoje
+    const completedToday = tasks.filter(task => {
+        if (!task.completedDate) return false;
+        const completedDate = new Date(task.completedDate);
+        completedDate.setHours(0, 0, 0, 0);
+        return completedDate.getTime() === today.getTime();
+    }).length;
+    
+    // Tarefas concluídas esta semana
+    const completedWeek = tasks.filter(task => {
+        if (!task.completedDate) return false;
+        const completedDate = new Date(task.completedDate);
+        return completedDate >= weekStart;
+    }).length;
+    
+    // Média diária (últimos 7 dias)
+    const completionHistory = getCompletionHistory();
+    const last7Days = Object.values(completionHistory).slice(-7);
+    const average = last7Days.length > 0 
+        ? (last7Days.reduce((a, b) => a + b, 0) / last7Days.length).toFixed(1)
+        : 0;
+    
+    // Total geral
+    const totalTasks = tasks.length;
+    
+    // Atualizar interface
+    document.getElementById('metricToday').textContent = completedToday;
+    document.getElementById('metricWeek').textContent = completedWeek;
+    document.getElementById('metricAverage').textContent = average;
+    document.getElementById('metricTotal').textContent = totalTasks;
+}
+
+function getCompletionHistory() {
+    const history = localStorage.getItem(`completionHistory_${currentUser}`);
+    return history ? JSON.parse(history) : {};
+}
+
+function saveCompletionHistory(history) {
+    localStorage.setItem(`completionHistory_${currentUser}`, JSON.stringify(history));
+}
+
+function recordTaskCompletion() {
+    const today = new Date().toISOString().split('T')[0];
+    const history = getCompletionHistory();
+    
+    if (!history[today]) {
+        history[today] = 0;
+    }
+    history[today]++;
+    
+    saveCompletionHistory(history);
+}
+
+// Modificar função de conclusão de tarefa para registrar data
+function markTaskCompleted(task) {
+    if (!task.completed && !task.completedDate) {
+        task.completedDate = new Date().toISOString();
+        recordTaskCompletion();
     }
 }
 
