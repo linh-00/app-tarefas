@@ -1502,24 +1502,20 @@ function openTaskFromKanban(folderId, taskId) {
 
 function updateDateTime() {
     const now = new Date();
-    const options = { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric',
+    const timeString = now.toLocaleTimeString('pt-BR', { 
         hour: '2-digit',
-        minute: '2-digit'
-    };
-    const dateTimeString = now.toLocaleDateString('pt-BR', options);
+        minute: '2-digit',
+        second: '2-digit'
+    });
     
     const dateTimeEl = document.getElementById('currentDateTime');
     if (dateTimeEl) {
-        dateTimeEl.textContent = dateTimeString;
+        dateTimeEl.textContent = timeString;
     }
 }
 
-// Atualizar relógio a cada minuto
-setInterval(updateDateTime, 60000);
+// Atualizar relógio a cada segundo
+setInterval(updateDateTime, 1000);
 
 function openDashboard() {
     document.getElementById('mainScreen').style.display = 'none';
@@ -1592,21 +1588,47 @@ function renderDashboard() {
 function updateBuildingChart(stats) {
     const maxCount = Math.max(stats.pending, stats.awaiting_approval, stats.approved, stats.completed, 1);
     
-    // Atualizar cada barra
-    updateBar('barPending', stats.pending, maxCount);
-    updateBar('barAwaiting', stats.awaiting_approval, maxCount);
-    updateBar('barApproved', stats.approved, maxCount);
-    updateBar('barCompleted', stats.completed, maxCount);
+    // Atualizar cada barra com animação
+    setTimeout(() => updateBar('barPending', stats.pending, maxCount), 100);
+    setTimeout(() => updateBar('barAwaiting', stats.awaiting_approval, maxCount), 200);
+    setTimeout(() => updateBar('barApproved', stats.approved, maxCount), 300);
+    setTimeout(() => updateBar('barCompleted', stats.completed, maxCount), 400);
 }
 
 function updateBar(barId, count, maxCount) {
     const bar = document.getElementById(barId);
-    const percentage = (count / maxCount) * 100;
-    const height = Math.max(percentage, 10); // Mínimo 10% para visibilidade
     
+    if (!bar) return;
+    
+    // Calcular altura proporcional (0 a 100% baseado no valor máximo)
+    let percentage = 0;
+    if (count > 0) {
+        percentage = (count / maxCount) * 100;
+    }
+    
+    // Se a barra tiver 0 itens, altura 0%
+    // Se tiver itens, garantir altura mínima de 15% para visibilidade
+    const height = count === 0 ? 0 : Math.max(percentage, 15);
+    
+    // Aplicar altura com animação (CSS transition faz o efeito)
     bar.style.height = `${height}%`;
-    bar.querySelector('.bar-count').textContent = count;
+    
+    // Atualizar contador
+    const countElement = bar.querySelector('.bar-count');
+    if (countElement) {
+        countElement.textContent = count;
+        countElement.style.display = count === 0 ? 'none' : 'block';
+    }
+    
     bar.dataset.count = count;
+    
+    // Adicionar efeito visual quando a barra cresce
+    if (count > 0) {
+        bar.style.opacity = '0';
+        setTimeout(() => {
+            bar.style.opacity = '1';
+        }, 50);
+    }
 }
 
 function calculateMetrics(tasks) {
