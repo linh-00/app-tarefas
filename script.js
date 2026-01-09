@@ -27,6 +27,35 @@ let currentFolderId = null;
 let currentTaskId = null;
 let currentUser = null;
 
+// Função para exibir comentários de uma tarefa
+function displayTaskComments(task, elementId) {
+    const commentsContainer = document.getElementById(elementId);
+    if (!commentsContainer) return;
+    
+    if (!task.comments || task.comments.length === 0) {
+        commentsContainer.innerHTML = '<p style="color: #888; font-style: italic;">Nenhum comentário ainda</p>';
+        return;
+    }
+    
+    // Exibir comentários do mais recente para o mais antigo
+    const commentsHtml = task.comments
+        .slice()
+        .reverse()
+        .map((comment, index) => `
+            <div class="comment-item" style="background: #f8f9fa; padding: 10px; margin-bottom: 8px; border-radius: 6px; border-left: 3px solid #007bff;">
+                <div style="font-size: 0.85em; color: #666; margin-bottom: 4px;">
+                    📅 ${comment.date}
+                </div>
+                <div style="color: #333;">
+                    ${comment.text.replace(/\n/g, '<br>')}
+                </div>
+            </div>
+        `)
+        .join('');
+    
+    commentsContainer.innerHTML = commentsHtml;
+}
+
 // Sistema de Autenticação
 function checkAuth() {
     const loggedUser = localStorage.getItem('currentUser');
@@ -76,11 +105,18 @@ function login() {
     if (users[username] && users[username] === password) {
         currentUser = username;
         localStorage.setItem('currentUser', username);
+        
+        // Carregar dados primeiro
         loadUserData();
-        showMainScreen();
-        renderFolders();
-        renderLooseTasks();
-        updateTodayCount();
+        
+        // Aguardar um pouco para renderizar
+        setTimeout(() => {
+            showMainScreen();
+            renderFolders();
+            renderLooseTasks();
+            updateTodayCount();
+        }, 500);
+        
         document.getElementById('loginUsername').value = '';
         document.getElementById('loginPassword').value = '';
     } else {
@@ -149,29 +185,26 @@ function loadUserData() {
                     const data = doc.data();
                     folders = data.folders || [];
                     looseTasks = data.looseTasks || [];
-                    console.log('Dados carregados do Firebase');
+                    console.log('✅ Dados carregados do Firebase');
                 } else {
                     // Fallback para localStorage
                     folders = JSON.parse(localStorage.getItem(userKey)) || [];
                     looseTasks = JSON.parse(localStorage.getItem(tasksKey)) || [];
+                    console.log('📦 Dados carregados do localStorage');
                 }
-                renderFolders();
-                renderLooseTasks();
-                updateTodayCount();
             })
             .catch(error => {
-                console.error('Erro ao carregar do Firebase:', error);
+                console.error('❌ Erro ao carregar do Firebase:', error);
                 // Fallback para localStorage
                 folders = JSON.parse(localStorage.getItem(userKey)) || [];
                 looseTasks = JSON.parse(localStorage.getItem(tasksKey)) || [];
-                renderFolders();
-                renderLooseTasks();
-                updateTodayCount();
+                console.log('📦 Usando localStorage como fallback');
             });
     } else {
         // Usar apenas localStorage
         folders = JSON.parse(localStorage.getItem(userKey)) || [];
         looseTasks = JSON.parse(localStorage.getItem(tasksKey)) || [];
+        console.log('📦 Firebase não disponível - usando localStorage');
     }
 }
 
@@ -422,7 +455,10 @@ function openTaskFromToday(folderId, taskId) {
     // Campos editáveis
     document.getElementById('todayModalIsToday').checked = task.isToday || false;
     document.getElementById('todayModalDifficulty').value = task.difficulty || 5;
-    document.getElementById('todayModalObservations').value = task.observations || '';
+    document.getElementById('todayModalObservations').value = '';
+    
+    // Exibir comentários existentes
+    displayTaskComments(task, 'todayModalCommentsList');
     
     // Botão de completar
     const completeBtn = document.getElementById('todayModalCompleteBtn');
@@ -441,23 +477,56 @@ function closeTodayTaskModal() {
 
 function toggleTodayTask() {
     if (!currentTaskId || !currentFolderId) return;
-    toggleTaskFromToday(currentFolderId, currentTaskId);
     
-    // Atualizar botão
-    const task = currentFolderId === 'loose' 
-        ? looseTasks.find(t => t.id === currentTaskId)
-        : folders.find(f => f.id === currentFolderId)?.tasks.find(t => t.id === currentTaskId);
+    let task;
+    if (currentFolderId === 'loose') {
+        task = looseTasks.find(t => t.id === currentTaskId);
+        if (task) {
+            task.completed = !task.completed;
+            saveData();
+        }
+    } else {
+        // Converter folderId para número se necessário
+        const folderIdToFind = typeof currentFolderId === 'string' ? parseInt(currentFolderId) : currentFolderId;
+        const folder = folders.find(f => f.id === folderIdToFind);
+        if (folder) {
+            task = folder.tasks.find(t => t.id === currentTaskId);
+            if (task) {
+                task.completed = !task.completed;
+                saveData();
+            }
+        }
+    }
     
+    // Atualizar botão e interface
     if (task) {
         const completeBtn = document.getElementById('todayModalCompleteBtn');
         completeBtn.textContent = task.completed ? '✓ Concluída' : 'Concluir';
         completeBtn.className = task.completed ? 'complete-btn completed' : 'complete-btn';
+        renderTodayTasks();
+        updateTodayCount();
     }
 }
 
 function deleteTodayTask() {
     if (!currentTaskId || !currentFolderId) return;
-    deleteTaskFromToday(currentFolderId, currentTaskId);
+    
+    if (!confirm('Tem certeza que deseja excluir esta tarefa?')) return;
+    
+    if (currentFolderId === 'loose') {
+        looseTasks = looseTasks.filter(t => t.id !== currentTaskId);
+    } else {
+        // Converter folderId para número se necessário
+        const folderIdToFind = typeof currentFolderId === 'string' ? parseInt(currentFolderId) : currentFolderId;
+        const folder = folders.find(f => f.id === folderIdToFind);
+        if (folder) {
+            folder.tasks = folder.tasks.filter(t => t.id !== currentTaskId);
+        }
+    }
+    
+    saveData();
+    updateTodayCount();
+    renderTodayTasks();
     closeTodayTaskModal();
 }
 
@@ -528,25 +597,41 @@ function updateTodayTaskDifficulty() {
 function saveTodayObservations() {
     if (!currentTaskId || !currentFolderId) return;
     
-    const observations = document.getElementById('todayModalObservations').value;
+    const observationText = document.getElementById('todayModalObservations').value.trim();
+    if (!observationText) {
+        alert('❌ Digite uma observação antes de salvar!');
+        return;
+    }
     
+    let task;
     if (currentFolderId === 'loose') {
-        const task = looseTasks.find(t => t.id === currentTaskId);
-        if (task) {
-            task.observations = observations;
-            saveData();
-            alert('Observações salvas!');
-        }
+        task = looseTasks.find(t => t.id === currentTaskId);
     } else {
-        const folder = folders.find(f => f.id === currentFolderId);
-        if (folder) {
-            const task = folder.tasks.find(t => t.id === currentTaskId);
-            if (task) {
-                task.observations = observations;
-                saveData();
-                alert('Observações salvas!');
-            }
+        // Converter folderId para número se necessário
+        const folderIdToFind = typeof currentFolderId === 'string' ? parseInt(currentFolderId) : currentFolderId;
+        const folder = folders.find(f => f.id === folderIdToFind);
+        task = folder?.tasks.find(t => t.id === currentTaskId);
+    }
+    
+    if (task) {
+        // Inicializar array de comentários se não existir
+        if (!task.comments) {
+            task.comments = [];
         }
+        
+        // Adicionar novo comentário com timestamp
+        const comment = {
+            text: observationText,
+            date: new Date().toLocaleString('pt-BR')
+        };
+        task.comments.push(comment);
+        
+        saveData();
+        
+        // Limpar campo e atualizar exibição
+        document.getElementById('todayModalObservations').value = '';
+        displayTaskComments(task, 'todayModalCommentsList');
+        alert('✓ Observação salva como comentário!');
     }
 }
 
@@ -591,8 +676,9 @@ function openTask(taskId) {
         document.getElementById('taskViewIsToday').checked = task.isToday || false;
         document.getElementById('taskViewDifficultySelect').value = task.difficulty || 5;
         
-        // Observações
-        document.getElementById('taskViewObservations').value = task.observations || '';
+        // Limpar campo de observações e exibir comentários existentes
+        document.getElementById('taskViewObservations').value = '';
+        displayTaskComments(task, 'taskViewCommentsList');
         
         const completeBtn = document.getElementById('taskViewCompleteBtn');
         completeBtn.textContent = task.completed ? '✓ Concluída' : 'Concluir';
@@ -648,24 +734,39 @@ function deleteCurrentTask() {
 function saveObservations() {
     if (!currentTaskId) return;
     
+    const observationText = document.getElementById('taskViewObservations').value.trim();
+    if (!observationText) {
+        alert('❌ Digite uma observação antes de salvar!');
+        return;
+    }
+    
+    let task;
     if (currentFolderId === 'loose') {
-        const task = looseTasks.find(t => t.id === currentTaskId);
-        if (task) {
-            const observations = document.getElementById('taskViewObservations').value;
-            task.observations = observations;
-            saveData();
-            alert('✓ Observações salvas com sucesso!');
-        }
+        task = looseTasks.find(t => t.id === currentTaskId);
     } else {
         const folder = folders.find(f => f.id === currentFolderId);
-        const task = folder?.tasks.find(t => t.id === currentTaskId);
-        
-        if (task) {
-            const observations = document.getElementById('taskViewObservations').value;
-            task.observations = observations;
-            saveData();
-            alert('✓ Observações salvas com sucesso!');
+        task = folder?.tasks.find(t => t.id === currentTaskId);
+    }
+    
+    if (task) {
+        // Inicializar array de comentários se não existir
+        if (!task.comments) {
+            task.comments = [];
         }
+        
+        // Adicionar novo comentário com timestamp
+        const comment = {
+            text: observationText,
+            date: new Date().toLocaleString('pt-BR')
+        };
+        task.comments.push(comment);
+        
+        saveData();
+        
+        // Limpar campo e atualizar exibição
+        document.getElementById('taskViewObservations').value = '';
+        displayTaskComments(task, 'taskViewCommentsList');
+        alert('✓ Observação salva como comentário!');
     }
 }
 
@@ -949,13 +1050,7 @@ function deleteFolder(folderId) {
 }
 
 function saveData() {
-    if (!currentUser) return;
-    
-    const userKey = `folders_${currentUser}`;
-    const tasksKey = `tasks_${currentUser}`;
-    
-    localStorage.setItem(userKey, JSON.stringify(folders));
-    localStorage.setItem(tasksKey, JSON.stringify(looseTasks));
+    saveUserData();
 }
 
 // Drag and Drop functions

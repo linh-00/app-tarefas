@@ -225,12 +225,15 @@
             </div>
             
             <div class="task-view-observations">
-                <h3>Observações / Progresso:</h3>
+                <h3>📝 Nova Observação:</h3>
                 <textarea 
                     id="taskViewObservations" 
-                    placeholder="Anote aqui o progresso da tarefa, partes concluídas, o que falta fazer..."
+                    placeholder="Digite aqui uma nova observação sobre o progresso da tarefa..."
                     class="observations-textarea"></textarea>
-                <button onclick="saveObservations()" class="save-obs-btn">Salvar Observações</button>
+                <button onclick="saveObservations()" class="save-obs-btn">Salvar Observação</button>
+                
+                <h3 style="margin-top: 20px;">💬 Comentários Anteriores:</h3>
+                <div id="taskViewCommentsList" style="max-height: 200px; overflow-y: auto;"></div>
             </div>
         </div>
     </div>
@@ -284,12 +287,15 @@
             </div>
             
             <div class="modal-section">
-                <h3>📝 Observações / Progresso:</h3>
+                <h3>📝 Nova Observação:</h3>
                 <textarea 
                     id="todayModalObservations" 
-                    placeholder="Anote aqui o progresso da tarefa, partes concluídas, o que falta fazer..."
+                    placeholder="Digite aqui uma nova observação sobre o progresso da tarefa..."
                     class="observations-textarea"></textarea>
-                <button onclick="saveTodayObservations()" class="save-obs-btn">Salvar Observações</button>
+                <button onclick="saveTodayObservations()" class="save-obs-btn">Salvar Observação</button>
+                
+                <h3 style="margin-top: 20px;">💬 Comentários Anteriores:</h3>
+                <div id="todayModalCommentsList" style="max-height: 200px; overflow-y: auto;"></div>
             </div>
             
             <div class="modal-actions">
