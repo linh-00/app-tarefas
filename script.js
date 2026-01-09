@@ -253,6 +253,7 @@ function goBackToMain() {
     document.getElementById('folderScreen').style.display = 'none';
     document.getElementById('taskViewScreen').style.display = 'none';
     document.getElementById('todayTasksScreen').style.display = 'none';
+    document.getElementById('kanbanScreen').style.display = 'none';
     renderFolders();
     renderLooseTasks();
     updateTodayCount();
@@ -455,6 +456,7 @@ function openTaskFromToday(folderId, taskId) {
     // Campos editáveis
     document.getElementById('todayModalIsToday').checked = task.isToday || false;
     document.getElementById('todayModalDifficulty').value = task.difficulty || 5;
+    document.getElementById('todayModalStatus').value = task.status || 'pending';
     document.getElementById('todayModalObservations').value = '';
     
     // Exibir comentários existentes
@@ -594,6 +596,40 @@ function updateTodayTaskDifficulty() {
     }
 }
 
+function updateTodayTaskStatus() {
+    if (!currentTaskId || !currentFolderId) return;
+    
+    const status = document.getElementById('todayModalStatus').value;
+    
+    let task;
+    if (currentFolderId === 'loose') {
+        task = looseTasks.find(t => t.id === currentTaskId);
+    } else {
+        const folderIdToFind = typeof currentFolderId === 'string' ? parseInt(currentFolderId) : currentFolderId;
+        const folder = folders.find(f => f.id === folderIdToFind);
+        task = folder?.tasks.find(t => t.id === currentTaskId);
+    }
+    
+    if (task) {
+        task.status = status;
+        
+        // Se status for 'completed', marcar como concluída
+        if (status === 'completed') {
+            task.completed = true;
+        } else {
+            task.completed = false;
+        }
+        
+        saveData();
+        renderTodayTasks();
+        
+        // Atualizar botão de completar
+        const completeBtn = document.getElementById('todayModalCompleteBtn');
+        completeBtn.textContent = task.completed ? '✓ Concluída' : 'Concluir';
+        completeBtn.className = task.completed ? 'complete-btn completed' : 'complete-btn';
+    }
+}
+
 function saveTodayObservations() {
     if (!currentTaskId || !currentFolderId) return;
     
@@ -675,6 +711,7 @@ function openTask(taskId) {
         // Checkbox e select editáveis
         document.getElementById('taskViewIsToday').checked = task.isToday || false;
         document.getElementById('taskViewDifficultySelect').value = task.difficulty || 5;
+        document.getElementById('taskViewStatus').value = task.status || 'pending';
         
         // Limpar campo de observações e exibir comentários existentes
         document.getElementById('taskViewObservations').value = '';
@@ -819,6 +856,38 @@ function updateTaskDifficulty() {
             difficultyEl.className = `difficulty-badge ${getDifficultyClass(difficulty)}`;
             difficultyEl.style.display = 'inline-block';
         }
+    }
+}
+
+function updateTaskViewStatus() {
+    if (!currentTaskId || !currentFolderId) return;
+    
+    const status = document.getElementById('taskViewStatus').value;
+    
+    let task;
+    if (currentFolderId === 'loose') {
+        task = looseTasks.find(t => t.id === currentTaskId);
+    } else {
+        const folder = folders.find(f => f.id === currentFolderId);
+        task = folder?.tasks.find(t => t.id === currentTaskId);
+    }
+    
+    if (task) {
+        task.status = status;
+        
+        // Se status for 'completed', marcar como concluída
+        if (status === 'completed') {
+            task.completed = true;
+        } else {
+            task.completed = false;
+        }
+        
+        saveData();
+        
+        // Atualizar botão de completar
+        const completeBtn = document.getElementById('taskViewCompleteBtn');
+        completeBtn.textContent = task.completed ? '✓ Concluída' : 'Concluir';
+        completeBtn.className = task.completed ? 'complete-btn completed' : 'complete-btn';
     }
 }
 
@@ -1174,6 +1243,227 @@ function renderFolders() {
         </div>
         `;
     }).join('');
+}
+
+// ========== KANBAN BOARD ==========
+
+function openKanbanBoard() {
+    document.getElementById('mainScreen').style.display = 'none';
+    document.getElementById('kanbanScreen').style.display = 'block';
+    renderKanbanBoard();
+}
+
+function renderKanbanBoard() {
+    const allTasks = getAllTasksForKanban();
+    
+    // Limpar colunas
+    document.getElementById('pendingColumn').innerHTML = '';
+    document.getElementById('awaitingColumn').innerHTML = '';
+    document.getElementById('approvedColumn').innerHTML = '';
+    document.getElementById('completedColumn').innerHTML = '';
+    
+    // Contadores
+    let pendingCount = 0;
+    let awaitingCount = 0;
+    let approvedCount = 0;
+    let completedCount = 0;
+    
+    allTasks.forEach(taskInfo => {
+        const { task, folderId, folderName } = taskInfo;
+        const status = task.status || 'pending';
+        
+        const cardHtml = createKanbanCard(task, folderId, folderName);
+        
+        switch (status) {
+            case 'pending':
+                document.getElementById('pendingColumn').innerHTML += cardHtml;
+                pendingCount++;
+                break;
+            case 'awaiting_approval':
+                document.getElementById('awaitingColumn').innerHTML += cardHtml;
+                awaitingCount++;
+                break;
+            case 'approved':
+                document.getElementById('approvedColumn').innerHTML += cardHtml;
+                approvedCount++;
+                break;
+            case 'completed':
+                document.getElementById('completedColumn').innerHTML += cardHtml;
+                completedCount++;
+                break;
+        }
+    });
+    
+    // Atualizar contadores
+    document.getElementById('pendingCount').textContent = pendingCount;
+    document.getElementById('awaitingCount').textContent = awaitingCount;
+    document.getElementById('approvedCount').textContent = approvedCount;
+    document.getElementById('completedCount').textContent = completedCount;
+    
+    // Atualizar contador do card do menu principal
+    const totalInFlow = awaitingCount + approvedCount;
+    document.getElementById('kanbanTaskCount').textContent = `${totalInFlow} tarefa${totalInFlow !== 1 ? 's' : ''} em fluxo`;
+}
+
+function getAllTasksForKanban() {
+    const allTasks = [];
+    
+    // Tarefas soltas
+    looseTasks.forEach(task => {
+        allTasks.push({
+            task: task,
+            folderId: 'loose',
+            folderName: 'Tarefas Soltas'
+        });
+    });
+    
+    // Tarefas das pastas
+    folders.forEach(folder => {
+        folder.tasks.forEach(task => {
+            allTasks.push({
+                task: task,
+                folderId: folder.id,
+                folderName: folder.name
+            });
+        });
+    });
+    
+    return allTasks;
+}
+
+function createKanbanCard(task, folderId, folderName) {
+    const status = task.status || 'pending';
+    const difficultyClass = getDifficultyClass(task.difficulty);
+    
+    return `
+        <div class="kanban-card" 
+             draggable="true" 
+             data-task-id="${task.id}" 
+             data-folder-id="${folderId}"
+             data-status="${status}"
+             ondragstart="handleKanbanDragStart(event)"
+             ondragend="handleKanbanDragEnd(event)">
+            <div class="kanban-card-folder">📁 ${folderName}</div>
+            <div class="kanban-card-title">${task.title}</div>
+            ${task.difficulty ? `<span class="kanban-card-difficulty difficulty-badge ${difficultyClass}">🎯 ${task.difficulty}/10</span>` : ''}
+            <div class="kanban-card-actions">
+                <button class="kanban-card-btn view" onclick="openTaskFromKanban('${folderId}', ${task.id})">Abrir</button>
+            </div>
+        </div>
+    `;
+}
+
+let draggedKanbanTask = null;
+let draggedKanbanFolderId = null;
+
+function handleKanbanDragStart(event) {
+    const card = event.target.closest('.kanban-card');
+    draggedKanbanTask = parseInt(card.dataset.taskId);
+    draggedKanbanFolderId = card.dataset.folderId;
+    
+    card.classList.add('dragging');
+}
+
+function handleKanbanDragEnd(event) {
+    const card = event.target.closest('.kanban-card');
+    card.classList.remove('dragging');
+}
+
+function handleKanbanDragOver(event) {
+    event.preventDefault();
+    const column = event.currentTarget;
+    column.classList.add('drag-over');
+}
+
+function handleKanbanDragLeave(event) {
+    const column = event.currentTarget;
+    column.classList.remove('drag-over');
+}
+
+function handleKanbanDrop(event, newStatus) {
+    event.preventDefault();
+    const column = event.currentTarget;
+    column.classList.remove('drag-over');
+    
+    if (draggedKanbanTask === null || draggedKanbanFolderId === null) return;
+    
+    updateTaskStatus(draggedKanbanFolderId, draggedKanbanTask, newStatus);
+    
+    draggedKanbanTask = null;
+    draggedKanbanFolderId = null;
+}
+
+function updateTaskStatus(folderId, taskId, newStatus) {
+    let task = null;
+    
+    if (folderId === 'loose') {
+        task = looseTasks.find(t => t.id === taskId);
+    } else {
+        const folderIdToFind = typeof folderId === 'string' ? parseInt(folderId) : folderId;
+        const folder = folders.find(f => f.id === folderIdToFind);
+        task = folder?.tasks.find(t => t.id === taskId);
+    }
+    
+    if (task) {
+        task.status = newStatus;
+        
+        // Se for concluída, marcar como completed também
+        if (newStatus === 'completed') {
+            task.completed = true;
+        } else {
+            task.completed = false;
+        }
+        
+        saveData();
+        renderKanbanBoard();
+        updateTodayCount();
+    }
+}
+
+function openTaskFromKanban(folderId, taskId) {
+    if (folderId === 'loose') {
+        currentFolderId = 'loose';
+        currentTaskId = taskId;
+        const task = looseTasks.find(t => t.id === taskId);
+        
+        if (task) {
+            document.getElementById('kanbanScreen').style.display = 'none';
+            document.getElementById('taskViewScreen').style.display = 'block';
+            
+            document.getElementById('taskViewTitleText').textContent = task.title;
+            document.getElementById('taskViewDescriptionText').textContent = task.description || 'Sem descrição';
+            
+            // Dificuldade
+            const difficultyEl = document.getElementById('taskViewDifficulty');
+            if (task.difficulty) {
+                difficultyEl.textContent = `🎯 Dificuldade: ${task.difficulty}/10 - ${getDifficultyText(task.difficulty)}`;
+                difficultyEl.className = `difficulty-badge ${getDifficultyClass(task.difficulty)}`;
+                difficultyEl.style.display = 'inline-block';
+            } else {
+                difficultyEl.style.display = 'none';
+            }
+            
+            const todayBadge = document.getElementById('taskViewTodayBadge');
+            todayBadge.style.display = task.isToday ? 'inline-flex' : 'none';
+            
+            document.getElementById('taskViewIsToday').checked = task.isToday || false;
+            document.getElementById('taskViewDifficultySelect').value = task.difficulty || 5;
+            
+            document.getElementById('taskViewObservations').value = '';
+            displayTaskComments(task, 'taskViewCommentsList');
+            
+            const completeBtn = document.getElementById('taskViewCompleteBtn');
+            completeBtn.textContent = task.completed ? '✓ Concluída' : 'Concluir';
+            completeBtn.className = task.completed ? 'complete-btn completed' : 'complete-btn';
+        }
+    } else {
+        const folderIdToFind = typeof folderId === 'string' ? parseInt(folderId) : folderId;
+        currentFolderId = folderIdToFind;
+        currentTaskId = taskId;
+        
+        openTask(taskId);
+        document.getElementById('kanbanScreen').style.display = 'none';
+    }
 }
 
 // Iniciar aplicação

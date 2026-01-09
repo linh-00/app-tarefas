@@ -126,6 +126,14 @@
             </div>
         </div>
 
+        <div class="today-tasks-card" onclick="openKanbanBoard()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="today-card-icon">📊</div>
+            <div class="today-card-content">
+                <h3>Quadro Kanban</h3>
+                <p id="kanbanTaskCount">0 tarefas em fluxo</p>
+            </div>
+        </div>
+
         <div id="foldersContainer"></div>
     </div>
 
@@ -217,6 +225,15 @@
                         <option value="10">10 - Muito Difícil</option>
                     </select>
                 </label>
+                <label class="difficulty-label">
+                    <span>📊 Status:</span>
+                    <select id="taskViewStatus" class="difficulty-select" onchange="updateTaskViewStatus()">
+                        <option value="pending">📋 Pendente</option>
+                        <option value="awaiting_approval">⏳ Aguardando Aprovação</option>
+                        <option value="approved">✅ Alteração Aprovada</option>
+                        <option value="completed">🎉 Concluída</option>
+                    </select>
+                </label>
             </div>
             
             <div class="task-view-description">
@@ -234,6 +251,72 @@
                 
                 <h3 style="margin-top: 20px;">💬 Comentários Anteriores:</h3>
                 <div id="taskViewCommentsList" style="max-height: 200px; overflow-y: auto;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela Kanban -->
+    <div class="container" id="kanbanScreen" style="display: none;">
+        <div class="folder-header-screen">
+            <button class="back-btn" onclick="goBackToMain()">← Voltar</button>
+            <h1>📊 Quadro Kanban</h1>
+        </div>
+
+        <div class="kanban-board">
+            <div class="kanban-column">
+                <div class="kanban-column-header" style="background: #6c757d;">
+                    <h3>📋 Pendente</h3>
+                    <span class="kanban-count" id="pendingCount">0</span>
+                </div>
+                <div class="kanban-column-content" 
+                     id="pendingColumn"
+                     data-status="pending"
+                     ondragover="handleKanbanDragOver(event)"
+                     ondragleave="handleKanbanDragLeave(event)"
+                     ondrop="handleKanbanDrop(event, 'pending')">
+                </div>
+            </div>
+
+            <div class="kanban-column">
+                <div class="kanban-column-header" style="background: #ffc107;">
+                    <h3>⏳ Aguardando Aprovação</h3>
+                    <span class="kanban-count" id="awaitingCount">0</span>
+                </div>
+                <div class="kanban-column-content" 
+                     id="awaitingColumn"
+                     data-status="awaiting_approval"
+                     ondragover="handleKanbanDragOver(event)"
+                     ondragleave="handleKanbanDragLeave(event)"
+                     ondrop="handleKanbanDrop(event, 'awaiting_approval')">
+                </div>
+            </div>
+
+            <div class="kanban-column">
+                <div class="kanban-column-header" style="background: #17a2b8;">
+                    <h3>✅ Alteração Aprovada</h3>
+                    <span class="kanban-count" id="approvedCount">0</span>
+                </div>
+                <div class="kanban-column-content" 
+                     id="approvedColumn"
+                     data-status="approved"
+                     ondragover="handleKanbanDragOver(event)"
+                     ondragleave="handleKanbanDragLeave(event)"
+                     ondrop="handleKanbanDrop(event, 'approved')">
+                </div>
+            </div>
+
+            <div class="kanban-column">
+                <div class="kanban-column-header" style="background: #28a745;">
+                    <h3>🎉 Concluída</h3>
+                    <span class="kanban-count" id="completedCount">0</span>
+                </div>
+                <div class="kanban-column-content" 
+                     id="completedColumn"
+                     data-status="completed"
+                     ondragover="handleKanbanDragOver(event)"
+                     ondragleave="handleKanbanDragLeave(event)"
+                     ondrop="handleKanbanDrop(event, 'completed')">
+                </div>
             </div>
         </div>
     </div>
@@ -282,6 +365,15 @@
                         <option value="8">8</option>
                         <option value="9">9</option>
                         <option value="10">10 - Muito Difícil</option>
+                    </select>
+                </label>
+                <label class="difficulty-label">
+                    <span>📊 Status:</span>
+                    <select id="todayModalStatus" class="difficulty-select" onchange="updateTodayTaskStatus()">
+                        <option value="pending">📋 Pendente</option>
+                        <option value="awaiting_approval">⏳ Aguardando Aprovação</option>
+                        <option value="approved">✅ Alteração Aprovada</option>
+                        <option value="completed">🎉 Concluída</option>
                     </select>
                 </label>
             </div>
