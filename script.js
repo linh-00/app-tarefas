@@ -60,6 +60,7 @@ function login() {
         showMainScreen();
         renderFolders();
         renderLooseTasks();
+        updateTodayCount();
         document.getElementById('loginUsername').value = '';
         document.getElementById('loginPassword').value = '';
     } else {
@@ -348,33 +349,33 @@ function openTaskFromToday(folderId, taskId) {
     document.getElementById('todayModalTitle').textContent = task.title;
     document.getElementById('todayModalFolder').textContent = `📁 ${folderName}`;
     document.getElementById('todayModalDescription').textContent = task.description || 'Sem descrição';
-        
-        // Badges
-        const badgesHtml = `
-            <span class="difficulty-badge ${getDifficultyClass(task.difficulty)}">
-                🎯 ${task.difficulty}/10 - ${getDifficultyText(task.difficulty)}
-            </span>
-        `;
-        document.getElementById('todayModalBadges').innerHTML = badgesHtml;
-        
-        // Campos editáveis
-        document.getElementById('todayModalIsToday').checked = task.isToday || false;
-        document.getElementById('todayModalDifficulty').value = task.difficulty || 5;
-        document.getElementById('todayModalObservations').value = task.observations || '';
-        
-        // Botão de completar
-        const completeBtn = document.getElementById('todayModalCompleteBtn');
-        completeBtn.textContent = task.completed ? '✓ Concluída' : 'Concluir';
-        completeBtn.className = task.completed ? 'complete-btn completed' : 'complete-btn';
-        
-        // Abrir modal
-        modal.style.display = 'block';
-        setTimeout(() => {
-            if (modal.style.display !== 'block') {
+    
+    // Badges
+    const badgesHtml = `
+        <span class="difficulty-badge ${getDifficultyClass(task.difficulty)}">
+            🎯 ${task.difficulty}/10 - ${getDifficultyText(task.difficulty)}
+        </span>
+    `;
+    document.getElementById('todayModalBadges').innerHTML = badgesHtml;
+    
+    // Campos editáveis
+    document.getElementById('todayModalIsToday').checked = task.isToday || false;
+    document.getElementById('todayModalDifficulty').value = task.difficulty || 5;
+    document.getElementById('todayModalObservations').value = task.observations || '';
+    
+    // Botão de completar
+    const completeBtn = document.getElementById('todayModalCompleteBtn');
+    completeBtn.textContent = task.completed ? '✓ Concluída' : 'Concluir';
     completeBtn.className = task.completed ? 'complete-btn completed' : 'complete-btn';
     
     // Abrir modal
-    document.getElementById('todayTaskModal').style.display = 'block';urrentFolderId = null;
+    document.getElementById('todayTaskModal').style.display = 'block';
+}
+
+function closeTodayTaskModal() {
+    document.getElementById('todayTaskModal').style.display = 'none';
+    currentTaskId = null;
+    currentFolderId = null;
 }
 
 function toggleTodayTask() {
@@ -656,43 +657,6 @@ function updateTaskDifficulty() {
             difficultyEl.className = `difficulty-badge ${getDifficultyClass(difficulty)}`;
             difficultyEl.style.display = 'inline-block';
         }
-    }
-}
-
-function updateTaskIsToday() {
-    if (!currentFolderId || !currentTaskId) return;
-    
-    const folder = folders.find(f => f.id === currentFolderId);
-    const task = folder?.tasks.find(t => t.id === currentTaskId);
-    
-    if (task) {
-        const isToday = document.getElementById('taskViewIsToday').checked;
-        task.isToday = isToday;
-        saveData();
-        updateTodayCount();
-        
-        // Atualiza badge visual
-        const todayBadge = document.getElementById('taskViewTodayBadge');
-        todayBadge.style.display = isToday ? 'inline-flex' : 'none';
-    }
-}
-
-function updateTaskDifficulty() {
-    if (!currentFolderId || !currentTaskId) return;
-    
-    const folder = folders.find(f => f.id === currentFolderId);
-    const task = folder?.tasks.find(t => t.id === currentTaskId);
-    
-    if (task) {
-        const difficulty = parseInt(document.getElementById('taskViewDifficultySelect').value);
-        task.difficulty = difficulty;
-        saveData();
-        
-        // Atualiza badge visual
-        const difficultyEl = document.getElementById('taskViewDifficulty');
-        difficultyEl.textContent = `🎯 Dificuldade: ${difficulty}/10 - ${getDifficultyText(difficulty)}`;
-        difficultyEl.className = `difficulty-badge ${getDifficultyClass(difficulty)}`;
-        difficultyEl.style.display = 'inline-block';
     }
 }
 
@@ -1055,3 +1019,6 @@ function renderFolders() {
         `;
     }).join('');
 }
+
+// Iniciar aplicação
+checkAuth();
