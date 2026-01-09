@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Tarefas</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Tela de Login -->
+    <div class="container" id="loginScreen">
+        <h1>🔒 Login - Minhas Tarefas</h1>
+        
+        <div class="login-form">
+            <input 
+                type="text" 
+                id="loginUsername" 
+                placeholder="Usuário"
+                class="login-input">
+            <input 
+                type="password" 
+                id="loginPassword" 
+                placeholder="Senha"
+                class="login-input"
+                onkeypress="if(event.key === 'Enter') login()">
+            <button onclick="login()" class="login-btn">Entrar</button>
+            <button onclick="showRegister()" class="register-btn">Criar Conta</button>
+        </div>
+    </div>
+
+    <!-- Tela de Registro -->
+    <div class="container" id="registerScreen" style="display: none;">
+        <h1>🔑 Criar Conta</h1>
+        
+        <div class="login-form">
+            <input 
+                type="text" 
+                id="registerUsername" 
+                placeholder="Usuário"
+                class="login-input">
+            <input 
+                type="password" 
+                id="registerPassword" 
+                placeholder="Senha"
+                class="login-input">
+            <input 
+                type="password" 
+                id="registerPasswordConfirm" 
+                placeholder="Confirmar Senha"
+                class="login-input"
+                onkeypress="if(event.key === 'Enter') register()">
+            <button onclick="register()" class="login-btn">Criar Conta</button>
+            <button onclick="showLogin()" class="register-btn">Voltar ao Login</button>
+        </div>
+    </div>
+
+    <!-- Tela Principal -->
+    <div class="container" id="mainScreen" style="display: none;">
+        <div class="header-with-logout">
+            <h1>📝 Minhas Tarefas</h1>
+            <button onclick="logout()" class="logout-btn">Sair</button>
+        </div>
+        
+        <div class="folder-section">
+            <div class="input-container">
+                <input 
+                    type="text" 
+                    id="folderInput" 
+                    placeholder="Nome da pasta..."
+                    onkeypress="if(event.key === 'Enter') addFolder()">
+                <button onclick="addFolder()">📁 Criar Pasta</button>
+            </div>
+        </div>
+
+        <div class="loose-tasks-section">
+            <h2>📋 Tarefas Soltas</h2>
+            <div class="task-form">
+                <input 
+                    type="text" 
+                    id="taskTitle" 
+                    placeholder="Título da tarefa..."
+                    class="task-title-input">
+                <textarea 
+                    id="taskDescription" 
+                    placeholder="Descrição (opcional)..."
+                    class="task-description-input"
+                    rows="2"></textarea>
+                <button onclick="addLooseTask()">+ Adicionar Tarefa</button>
+            </div>
+            <ul id="looseTasksList" class="task-drop-zone"
+                ondragover="handleDragOver(event)"
+                ondragleave="handleDragLeave(event)"
+                ondrop="handleDrop(event, 'loose')"></ul>
+        </div>
+
+        <div id="foldersContainer"></div>
+    </div>
+
+    <!-- Tela da Pasta -->
+    <div class="container" id="folderScreen" style="display: none;">
+        <div class="folder-header-screen">
+            <button class="back-btn" onclick="goBackToMain()">← Voltar</button>
+            <h1 id="folderScreenTitle">📁 Pasta</h1>
+        </div>
+
+        <div class="folder-content">
+            <div class="task-form">
+                <input 
+                    type="text" 
+                    id="folderScreenTaskTitle" 
+                    placeholder="Título da tarefa..."
+                    class="task-title-input">
+                <textarea 
+                    id="folderScreenTaskDescription" 
+                    placeholder="Descrição (opcional)..."
+                    class="task-description-input"
+                    rows="2"></textarea>
+                <button onclick="addTaskToCurrentFolder()">+ Adicionar Tarefa</button>
+            </div>
+
+            <ul id="folderScreenTasksList"></ul>
+        </div>
+    </div>
+
+    <!-- Tela de Visualização da Tarefa -->
+    <div class="container" id="taskViewScreen" style="display: none;">
+        <div class="folder-header-screen">
+            <button class="back-btn" onclick="goBackToFolder()">← Voltar</button>
+            <h1 id="taskViewTitle">📋 Tarefa</h1>
+        </div>
+
+        <div class="task-view-content">
+            <div class="task-view-header">
+                <h2 id="taskViewTitleText"></h2>
+                <div class="task-view-actions">
+                    <button id="taskViewCompleteBtn" class="complete-btn" onclick="toggleCurrentTask()">Concluir</button>
+                    <button class="delete-btn" onclick="deleteCurrentTask()">Excluir Tarefa</button>
+                </div>
+            </div>
+            <div class="task-view-description">
+                <h3>Descrição:</h3>
+                <p id="taskViewDescriptionText"></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
