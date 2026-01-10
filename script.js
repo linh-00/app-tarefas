@@ -366,8 +366,13 @@ function renderTodayTasks() {
     grid.innerHTML = todayTasks.map(task => {
         const escapedFolderId = String(task.folderId).replace(/'/g, "\\'");
         return `
-        <div class="today-simple-card ${task.completed ? 'completed-card' : ''}">
-            <div class="today-card-folder">📁 ${task.folderName}</div>
+        <div class="today-simple-card task-card-status-${task.status || 'pending'} ${task.completed ? 'completed-card' : ''}">
+            <div class="today-card-header-flex">
+                <div class="today-card-folder">📁 ${task.folderName}</div>
+                <span class="status-badge-card status-${task.status || 'pending'}">
+                    ${getStatusText(task.status || 'pending')}
+                </span>
+            </div>
             <h3 class="today-card-title">${task.title}</h3>
             <div class="today-card-buttons">
                 <button class="open-task-btn" onclick="openTaskFromToday('${escapedFolderId}', ${task.id})">
@@ -484,7 +489,7 @@ function renderLooseTasksGrid() {
     }
     
     grid.innerHTML = looseTasks.map(task => `
-        <div class="task-card ${task.completed ? 'completed' : ''}" onclick="openTaskFromLooseGrid(${task.id})">
+        <div class="task-card task-card-status-${task.status || 'pending'} ${task.completed ? 'completed' : ''}" onclick="openTaskFromLooseGrid(${task.id})">
             <div class="task-card-header">
                 <h3>${task.title}</h3>
                 ${task.isToday ? '<span class="today-badge-small">⭐</span>' : ''}
@@ -494,7 +499,7 @@ function renderLooseTasksGrid() {
                 <span class="difficulty-badge ${getDifficultyClass(task.difficulty)}">
                     🎯 ${task.difficulty}/10
                 </span>
-                <span class="status-badge status-${task.status || 'pending'}">
+                <span class="status-badge-card status-${task.status || 'pending'}">
                     ${getStatusText(task.status || 'pending')}
                 </span>
             </div>
@@ -1146,7 +1151,7 @@ function renderFolderScreen() {
     }
     
     list.innerHTML = folder.tasks.map(task => `
-        <li class="task-card ${task.completed ? 'completed-card' : ''}" onclick="openTask(${task.id})">
+        <li class="task-card task-card-status-${task.status || 'pending'} ${task.completed ? 'completed-card' : ''}" onclick="openTask(${task.id})">
             <div class="task-card-content">
                 <div class="task-card-title">
                     ${task.title}
@@ -1155,8 +1160,10 @@ function renderFolderScreen() {
                 </div>
                 ${task.description ? `<div class="task-card-description">${task.description}</div>` : ''}
             </div>
-            <div class="task-card-status ${task.completed ? 'completed' : ''}">
-                ${task.completed ? '✓ Concluída' : '📝 Pendente'}
+            <div class="task-card-status-info">
+                <span class="status-badge-card status-${task.status || 'pending'}">
+                    ${getStatusText(task.status || 'pending')}
+                </span>
             </div>
         </li>
     `).join('');

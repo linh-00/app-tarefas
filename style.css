@@ -1015,6 +1015,70 @@ button:active {
     color: #155724;
 }
 
+/* Estilos dos cards por status Kanban */
+.task-card-status-pending {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-left: 4px solid #6c757d;
+}
+
+.task-card-status-awaiting_approval {
+    background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%);
+    border-left: 4px solid #ffc107;
+}
+
+.task-card-status-approved {
+    background: linear-gradient(135deg, #e7f5ff 0%, #d1ecf1 100%);
+    border-left: 4px solid #17a2b8;
+}
+
+.task-card-status-completed {
+    background: linear-gradient(135deg, #e8f5e9 0%, #d4edda 100%);
+    border-left: 4px solid #28a745;
+}
+
+/* Badge de status no card */
+.status-badge-card {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge-card.status-pending {
+    background: #6c757d;
+    color: white;
+}
+
+.status-badge-card.status-awaiting_approval {
+    background: #ffc107;
+    color: #333;
+}
+
+.status-badge-card.status-approved {
+    background: #17a2b8;
+    color: white;
+}
+
+.status-badge-card.status-completed {
+    background: #28a745;
+    color: white;
+}
+
+/* Header flex para Tarefas do Dia */
+.today-card-header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+/* Info de status nas tarefas da pasta */
+.task-card-status-info {
+    display: flex;
+    align-items: center;
+}
+
 .empty-tasks {
     text-align: center;
     padding: 60px 20px;
