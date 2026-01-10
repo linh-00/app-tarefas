@@ -131,6 +131,14 @@
             </div>
         </div>
 
+        <div class="today-tasks-card" onclick="openLooseTasksScreen()" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
+            <div class="today-card-icon">📋</div>
+            <div class="today-card-content">
+                <h3>Tarefas Soltas</h3>
+                <p id="looseTaskCount">0 tarefas</p>
+            </div>
+        </div>
+
         <div class="today-tasks-card" onclick="openKanbanBoard()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
             <div class="today-card-icon">📊</div>
             <div class="today-card-content">
@@ -222,7 +230,7 @@
             <div class="task-view-header">
                 <h2 id="taskViewTitleText"></h2>
                 <div class="task-view-actions">
-                    <button id="taskViewCompleteBtn" class="complete-btn" onclick="toggleCurrentTask()">Concluir</button>
+                    <button class="complete-btn" onclick="openStatusModal()">📊 Alterar Status</button>
                     <button class="delete-btn" onclick="deleteCurrentTask()">Excluir Tarefa</button>
                 </div>
             </div>
@@ -518,6 +526,16 @@
         <div class="today-tasks-grid" id="todayTasksGrid"></div>
     </div>
 
+    <!-- Tela de Tarefas Soltas -->
+    <div class="container" id="looseTasksScreen" style="display: none;">
+        <div class="folder-header-screen">
+            <button class="back-btn" onclick="goBackToMain()">← Voltar</button>
+            <h1>📋 Tarefas Soltas</h1>
+        </div>
+
+        <div class="loose-tasks-grid" id="looseTasksGrid"></div>
+    </div>
+
     <!-- Modal de Tarefa do Dia -->
     <div id="todayTaskModal" class="modal">
         <div class="modal-content modal-large">
@@ -578,8 +596,92 @@
             </div>
             
             <div class="modal-actions">
-                <button id="todayModalCompleteBtn" onclick="toggleTodayTask()" class="complete-btn">Concluir</button>
+                <button class="complete-btn" onclick="openStatusModalToday()">📊 Alterar Status</button>
                 <button onclick="deleteTodayTask()" class="delete-btn">Excluir Tarefa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Seleção de Status -->
+    <div id="statusModal" class="modal">
+        <div class="modal-content status-modal-content">
+            <span class="close" onclick="closeStatusModal()">&times;</span>
+            <h2>📊 Alterar Status da Tarefa</h2>
+            
+            <div class="status-options">
+                <button class="status-option pending" onclick="changeTaskStatus('pending')">
+                    <div class="status-icon">📋</div>
+                    <div class="status-text">
+                        <strong>Pendente</strong>
+                        <p>Tarefa ainda não iniciada</p>
+                    </div>
+                </button>
+                
+                <button class="status-option awaiting" onclick="changeTaskStatus('awaiting_approval')">
+                    <div class="status-icon">⏳</div>
+                    <div class="status-text">
+                        <strong>Aguardando Aprovação</strong>
+                        <p>Tarefa em análise</p>
+                    </div>
+                </button>
+                
+                <button class="status-option approved" onclick="changeTaskStatus('approved')">
+                    <div class="status-icon">✅</div>
+                    <div class="status-text">
+                        <strong>Alteração Aprovada</strong>
+                        <p>Pronto para execução</p>
+                    </div>
+                </button>
+                
+                <button class="status-option completed" onclick="changeTaskStatus('completed')">
+                    <div class="status-icon">🎉</div>
+                    <div class="status-text">
+                        <strong>Concluída</strong>
+                        <p>Tarefa finalizada</p>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Seleção de Status para Tarefas do Dia -->
+    <div id="statusModalToday" class="modal">
+        <div class="modal-content status-modal-content">
+            <span class="close" onclick="closeStatusModalToday()">&times;</span>
+            <h2>📊 Alterar Status da Tarefa</h2>
+            
+            <div class="status-options">
+                <button class="status-option pending" onclick="changeTodayTaskStatus('pending')">
+                    <div class="status-icon">📋</div>
+                    <div class="status-text">
+                        <strong>Pendente</strong>
+                        <p>Tarefa ainda não iniciada</p>
+                    </div>
+                </button>
+                
+                <button class="status-option awaiting" onclick="changeTodayTaskStatus('awaiting_approval')">
+                    <div class="status-icon">⏳</div>
+                    <div class="status-text">
+                        <strong>Aguardando Aprovação</strong>
+                        <p>Tarefa em análise</p>
+                    </div>
+                </button>
+                
+                <button class="status-option approved" onclick="changeTodayTaskStatus('approved')">
+                    <div class="status-icon">✅</div>
+                    <div class="status-text">
+                        <strong>Alteração Aprovada</strong>
+                        <p>Pronto para execução</p>
+                    </div>
+                </button>
+                
+                <button class="status-option completed" onclick="changeTodayTaskStatus('completed')">
+                    <div class="status-icon">🎉</div>
+                    <div class="status-text">
+                        <strong>Concluída</strong>
+                        <p>Tarefa finalizada</p>
+                    </div>
+                </button>
             </div>
         </div>
     </div>

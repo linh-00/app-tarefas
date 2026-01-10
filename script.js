@@ -93,6 +93,7 @@ function showMainScreen() {
     document.getElementById('todayTasksScreen').style.display = 'none';
     updateDateTime();
     updateFoldersCount();
+    updateLooseTaskCount();
     loadNotes();
 }
 
@@ -267,6 +268,7 @@ function goBackToMain() {
     document.getElementById('folderScreen').style.display = 'none';
     document.getElementById('taskViewScreen').style.display = 'none';
     document.getElementById('todayTasksScreen').style.display = 'none';
+    document.getElementById('looseTasksScreen').style.display = 'none';
     document.getElementById('kanbanScreen').style.display = 'none';
     document.getElementById('dashboardScreen').style.display = 'none';
     document.getElementById('foldersManageScreen').style.display = 'none';
@@ -275,6 +277,7 @@ function goBackToMain() {
     previousScreen = 'mainScreen';
     renderLooseTasks();
     updateTodayCount();
+    updateLooseTaskCount();
     updateDateTime();
     updateFoldersCount();
     updateNotesCount();
@@ -310,6 +313,14 @@ function updateTodayCount() {
     const countElement = document.getElementById('todayTaskCount');
     if (countElement) {
         const count = todayTasks.length;
+        countElement.textContent = `${count} ${count === 1 ? 'tarefa' : 'tarefas'}`;
+    }
+}
+
+function updateLooseTaskCount() {
+    const countElement = document.getElementById('looseTaskCount');
+    if (countElement) {
+        const count = looseTasks.length;
         countElement.textContent = `${count} ${count === 1 ? 'tarefa' : 'tarefas'}`;
     }
 }
@@ -457,6 +468,79 @@ function saveTaskObservation(folderId, taskId) {
     }
 }
 
+// ========== TAREFAS SOLTAS SCREEN ==========
+
+function openLooseTasksScreen() {
+    document.getElementById('mainScreen').style.display = 'none';
+    document.getElementById('looseTasksScreen').style.display = 'block';
+    renderLooseTasksGrid();
+}
+
+function renderLooseTasksGrid() {
+    const grid = document.getElementById('looseTasksGrid');
+    
+    if (looseTasks.length === 0) {
+        grid.innerHTML = '<div class="empty-tasks">📋 Nenhuma tarefa solta ainda.<br>Crie tarefas na tela inicial!</div>';
+        return;
+    }
+    
+    grid.innerHTML = looseTasks.map(task => `
+        <div class="task-card ${task.completed ? 'completed' : ''}" onclick="openTaskFromLooseGrid(${task.id})">
+            <div class="task-card-header">
+                <h3>${task.title}</h3>
+                ${task.isToday ? '<span class="today-badge-small">⭐</span>' : ''}
+            </div>
+            <p class="task-card-description">${task.description || 'Sem descrição'}</p>
+            <div class="task-card-footer">
+                <span class="difficulty-badge ${getDifficultyClass(task.difficulty)}">
+                    🎯 ${task.difficulty}/10
+                </span>
+                <span class="status-badge status-${task.status || 'pending'}">
+                    ${getStatusText(task.status || 'pending')}
+                </span>
+            </div>
+        </div>
+    `).join('');
+}
+
+function openTaskFromLooseGrid(taskId) {
+    currentFolderId = 'loose';
+    currentTaskId = taskId;
+    const task = looseTasks.find(t => t.id === taskId);
+    
+    if (!task) return;
+    
+    document.getElementById('looseTasksScreen').style.display = 'none';
+    document.getElementById('taskViewScreen').style.display = 'block';
+    
+    document.getElementById('taskViewTitleText').textContent = task.title;
+    document.getElementById('taskViewDescriptionText').textContent = task.description || 'Sem descrição';
+    
+    const difficultyBadge = document.getElementById('taskViewDifficulty');
+    difficultyBadge.textContent = `🎯 ${task.difficulty}/10 - ${getDifficultyText(task.difficulty)}`;
+    difficultyBadge.className = `difficulty-badge ${getDifficultyClass(task.difficulty)}`;
+    
+    document.getElementById('taskViewIsToday').checked = task.isToday || false;
+    document.getElementById('taskViewDifficultySelect').value = task.difficulty || 5;
+    document.getElementById('taskViewStatus').value = task.status || 'pending';
+    document.getElementById('taskViewObservations').value = '';
+    
+    displayTaskComments(task, 'taskViewCommentsList');
+    
+    const todayBadge = document.getElementById('taskViewTodayBadge');
+    todayBadge.style.display = task.isToday ? 'inline-block' : 'none';
+}
+
+function getStatusText(status) {
+    const statusMap = {
+        'pending': '📋 Pendente',
+        'awaiting_approval': '⏳ Aguardando',
+        'approved': '✅ Aprovada',
+        'completed': '🎉 Concluída'
+    };
+    return statusMap[status] || '📋 Pendente';
+}
+
 function openTaskFromToday(folderId, taskId) {
     let task;
     let folderName;
@@ -515,14 +599,15 @@ function closeTodayTaskModal() {
     currentFolderId = null;
 }
 
-function toggleTodayTask() {
+function changeTodayTaskStatus(newStatus) {
     if (!currentTaskId || !currentFolderId) return;
     
     let task;
     if (currentFolderId === 'loose') {
         task = looseTasks.find(t => t.id === currentTaskId);
         if (task) {
-            task.completed = !task.completed;
+            task.status = newStatus;
+            task.completed = (newStatus === 'completed');
             if (task.completed && !task.completedDate) {
                 task.completedDate = new Date().toISOString();
                 recordTaskCompletion();
@@ -538,7 +623,8 @@ function toggleTodayTask() {
         if (folder) {
             task = folder.tasks.find(t => t.id === currentTaskId);
             if (task) {
-                task.completed = !task.completed;
+                task.status = newStatus;
+                task.completed = (newStatus === 'completed');
                 if (task.completed && !task.completedDate) {
                     task.completedDate = new Date().toISOString();
                     recordTaskCompletion();
@@ -550,14 +636,21 @@ function toggleTodayTask() {
         }
     }
     
-    // Atualizar botão e interface
+    // Atualizar interface
     if (task) {
-        const completeBtn = document.getElementById('todayModalCompleteBtn');
-        completeBtn.textContent = task.completed ? '✓ Concluída' : 'Concluir';
-        completeBtn.className = task.completed ? 'complete-btn completed' : 'complete-btn';
         renderTodayTasks();
         updateTodayCount();
+        closeStatusModalToday();
+        closeTodayTaskModal();
     }
+}
+
+function openStatusModalToday() {
+    document.getElementById('statusModalToday').style.display = 'block';
+}
+
+function closeStatusModalToday() {
+    document.getElementById('statusModalToday').style.display = 'none';
 }
 
 function deleteTodayTask() {
@@ -723,10 +816,19 @@ function saveTodayObservations() {
 
 function goBackToFolder() {
     currentTaskId = null;
-    document.getElementById('mainScreen').style.display = 'none';
-    document.getElementById('folderScreen').style.display = 'block';
     document.getElementById('taskViewScreen').style.display = 'none';
-    renderFolderScreen();
+    
+    // Verificar de onde veio
+    if (currentFolderId === 'loose') {
+        // Voltar para tela de tarefas soltas
+        document.getElementById('looseTasksScreen').style.display = 'block';
+        renderLooseTasksGrid();
+    } else {
+        // Voltar para tela da pasta
+        document.getElementById('mainScreen').style.display = 'none';
+        document.getElementById('folderScreen').style.display = 'block';
+        renderFolderScreen();
+    }
 }
 
 function openTask(taskId) {
@@ -773,29 +875,14 @@ function openTask(taskId) {
     }
 }
 
-function toggleCurrentTask() {
+function changeTaskStatus(newStatus) {
     if (!currentTaskId) return;
     
     if (currentFolderId === 'loose') {
         const task = looseTasks.find(t => t.id === currentTaskId);
         if (task) {
-            task.completed = !task.completed;
-            if (task.completed && !task.completedDate) {
-                task.completedDate = new Date().toISOString();
-                recordTaskCompletion();
-            } else if (!task.completed) {
-                task.completedDate = null;
-            }
-            saveData();
-            openTaskFromToday('loose', currentTaskId);
-            updateTodayCount();
-        }
-    } else {
-        const folder = folders.find(f => f.id === currentFolderId);
-        const task = folder?.tasks.find(t => t.id === currentTaskId);
-        
-        if (task) {
-            task.completed = !task.completed;
+            task.status = newStatus;
+            task.completed = (newStatus === 'completed');
             if (task.completed && !task.completedDate) {
                 task.completedDate = new Date().toISOString();
                 recordTaskCompletion();
@@ -805,8 +892,35 @@ function toggleCurrentTask() {
             saveData();
             openTask(currentTaskId);
             updateTodayCount();
+            closeStatusModal();
+        }
+    } else {
+        const folder = folders.find(f => f.id === currentFolderId);
+        const task = folder?.tasks.find(t => t.id === currentTaskId);
+        
+        if (task) {
+            task.status = newStatus;
+            task.completed = (newStatus === 'completed');
+            if (task.completed && !task.completedDate) {
+                task.completedDate = new Date().toISOString();
+                recordTaskCompletion();
+            } else if (!task.completed) {
+                task.completedDate = null;
+            }
+            saveData();
+            openTask(currentTaskId);
+            updateTodayCount();
+            closeStatusModal();
         }
     }
+}
+
+function openStatusModal() {
+    document.getElementById('statusModal').style.display = 'block';
+}
+
+function closeStatusModal() {
+    document.getElementById('statusModal').style.display = 'none';
 }
 
 function deleteCurrentTask() {
