@@ -262,6 +262,7 @@ function goBackToMain() {
     document.getElementById('dashboardScreen').style.display = 'none';
     document.getElementById('foldersManageScreen').style.display = 'none';
     document.getElementById('notesScreen').style.display = 'none';
+    document.getElementById('noteViewScreen').style.display = 'none';
     renderLooseTasks();
     updateTodayCount();
     updateDateTime();
@@ -1825,15 +1826,13 @@ function renderNotes() {
     
     grid.innerHTML = notes.map(note => `
         <div class="note-card">
-            <div class="note-card-header">
-                <div class="note-card-title">${note.title}</div>
-                <div class="note-card-actions">
-                    <button class="note-edit-btn" onclick="editNote(${note.id})">✏️ Editar</button>
-                    <button class="note-delete-btn" onclick="deleteNote(${note.id})">🗑️ Excluir</button>
-                </div>
-            </div>
-            <div class="note-card-description">${note.description}</div>
+            <div class="note-card-title">${note.title}</div>
             <div class="note-card-date">📅 ${new Date(note.createdAt).toLocaleString('pt-BR')}</div>
+            <div class="note-card-actions">
+                <button class="note-open-btn" onclick="openNoteView(${note.id})">👁️ Abrir</button>
+                <button class="note-edit-btn" onclick="editNote(${note.id})">✏️</button>
+                <button class="note-delete-btn" onclick="deleteNote(${note.id})">🗑️</button>
+            </div>
         </div>
     `).join('');
 }
@@ -1917,6 +1916,27 @@ function deleteNote(noteId) {
     saveNotesData();
     renderNotes();
     updateNotesCount();
+}
+
+function openNoteView(noteId) {
+    const note = notes.find(n => n.id === noteId);
+    if (!note) return;
+    
+    document.getElementById('noteViewTitle').textContent = note.title;
+    document.getElementById('noteViewDescription').textContent = note.description;
+    document.getElementById('noteViewDate').textContent = `Criado em: ${new Date(note.createdAt).toLocaleString('pt-BR')}`;
+    
+    if (note.updatedAt && note.updatedAt !== note.createdAt) {
+        document.getElementById('noteViewDate').textContent += ` | Atualizado em: ${new Date(note.updatedAt).toLocaleString('pt-BR')}`;
+    }
+    
+    document.getElementById('notesScreen').style.display = 'none';
+    document.getElementById('noteViewScreen').style.display = 'block';
+}
+
+function closeNoteView() {
+    document.getElementById('noteViewScreen').style.display = 'none';
+    document.getElementById('notesScreen').style.display = 'block';
 }
 
 // Iniciar aplicação

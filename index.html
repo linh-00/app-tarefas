@@ -395,6 +395,19 @@
         <div class="notes-grid" id="notesGrid"></div>
     </div>
 
+    <!-- Tela de Visualização de Anotação -->
+    <div class="container" id="noteViewScreen" style="display: none;">
+        <div class="folder-header-screen">
+            <button class="back-btn" onclick="closeNoteView()">← Voltar</button>
+            <h1 id="noteViewTitle">Título da Anotação</h1>
+        </div>
+        
+        <div class="note-view-content">
+            <p id="noteViewDescription"></p>
+            <div id="noteViewDate" class="note-view-date"></div>
+        </div>
+    </div>
+
     <!-- Modal de Anotação -->
     <div id="noteModal" class="modal">
         <div class="modal-content">
