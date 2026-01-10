@@ -665,8 +665,37 @@ function deleteTodayTask() {
     
     saveData();
     updateTodayCount();
+    updateLooseTaskCount();
     renderTodayTasks();
     closeTodayTaskModal();
+}
+
+function removeFromTodayTasks() {
+    if (!currentTaskId || !currentFolderId) return;
+    
+    if (currentFolderId === 'loose') {
+        const task = looseTasks.find(t => t.id === currentTaskId);
+        if (task) {
+            task.isToday = false;
+            saveData();
+            updateTodayCount();
+            renderTodayTasks();
+            closeTodayTaskModal();
+        }
+    } else {
+        const folderIdToFind = typeof currentFolderId === 'string' ? parseInt(currentFolderId) : currentFolderId;
+        const folder = folders.find(f => f.id === folderIdToFind);
+        if (folder) {
+            const task = folder.tasks.find(t => t.id === currentTaskId);
+            if (task) {
+                task.isToday = false;
+                saveData();
+                updateTodayCount();
+                renderTodayTasks();
+                closeTodayTaskModal();
+            }
+        }
+    }
 }
 
 function updateTodayTaskIsToday() {
