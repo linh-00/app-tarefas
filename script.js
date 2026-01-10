@@ -245,7 +245,16 @@ function openFolder(folderId) {
     const folder = folders.find(f => f.id === folderId);
     
     if (folder) {
+        // Verificar de qual tela estamos vindo
+        const foldersManageScreen = document.getElementById('foldersManageScreen');
+        if (foldersManageScreen.style.display === 'block') {
+            previousScreen = 'foldersManageScreen';
+        } else {
+            previousScreen = 'mainScreen';
+        }
+        
         document.getElementById('mainScreen').style.display = 'none';
+        document.getElementById('foldersManageScreen').style.display = 'none';
         document.getElementById('folderScreen').style.display = 'block';
         document.getElementById('folderScreenTitle').textContent = `📁 ${folder.name}`;
         renderFolderScreen();
@@ -263,11 +272,29 @@ function goBackToMain() {
     document.getElementById('foldersManageScreen').style.display = 'none';
     document.getElementById('notesScreen').style.display = 'none';
     document.getElementById('noteViewScreen').style.display = 'none';
+    previousScreen = 'mainScreen';
     renderLooseTasks();
     updateTodayCount();
     updateDateTime();
     updateFoldersCount();
     updateNotesCount();
+}
+
+function goBackFromFolder() {
+    currentFolderId = null;
+    document.getElementById('folderScreen').style.display = 'none';
+    
+    if (previousScreen === 'foldersManageScreen') {
+        document.getElementById('foldersManageScreen').style.display = 'block';
+        renderFoldersManage();
+    } else {
+        document.getElementById('mainScreen').style.display = 'block';
+        renderLooseTasks();
+        updateTodayCount();
+        updateDateTime();
+        updateFoldersCount();
+        updateNotesCount();
+    }
 }
 
 function openTodayTasks() {
@@ -1390,6 +1417,7 @@ function createKanbanCard(task, folderId, folderName) {
 
 let draggedKanbanTask = null;
 let draggedKanbanFolderId = null;
+let previousScreen = 'mainScreen'; // Rastrear tela anterior
 
 function handleKanbanDragStart(event) {
     const card = event.target.closest('.kanban-card');
