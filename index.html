@@ -81,48 +81,6 @@
             </div>
         </div>
 
-        <div class="loose-tasks-section">
-            <h2>📋 Tarefas Soltas</h2>
-            <div class="task-form">
-                <input 
-                    type="text" 
-                    id="taskTitle" 
-                    placeholder="Título da tarefa..."
-                    class="task-title-input">
-                <textarea 
-                    id="taskDescription" 
-                    placeholder="Descrição (opcional)..."
-                    class="task-description-input"
-                    rows="2"></textarea>
-                <div class="task-extra-fields">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="taskIsToday">
-                        <span>⭐ Tarefa do dia</span>
-                    </label>
-                    <label class="difficulty-label">
-                        <span>🎯 Dificuldade:</span>
-                        <select id="taskDifficulty" class="difficulty-select">
-                            <option value="1">1 - Muito Fácil</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5" selected>5 - Média</option>
-                            <option value="6">6</option>
-                            <option value="7">7</option>
-                            <option value="8">8</option>
-                            <option value="9">9</option>
-                            <option value="10">10 - Muito Difícil</option>
-                        </select>
-                    </label>
-                </div>
-                <button onclick="addLooseTask()">+ Adicionar Tarefa</button>
-            </div>
-            <ul id="looseTasksList" class="task-drop-zone"
-                ondragover="handleDragOver(event)"
-                ondragleave="handleDragLeave(event)"
-                ondrop="handleDrop(event, 'loose')"></ul>
-        </div>
-
         <div class="today-tasks-card" onclick="openTodayTasks()">
             <div class="today-card-icon">⭐</div>
             <div class="today-card-content">
@@ -531,6 +489,41 @@
         <div class="folder-header-screen">
             <button class="back-btn" onclick="goBackToMain()">← Voltar</button>
             <h1>📋 Tarefas Soltas</h1>
+        </div>
+
+        <div class="task-form">
+            <input 
+                type="text" 
+                id="looseTaskTitle" 
+                placeholder="Título da tarefa..."
+                class="task-title-input">
+            <textarea 
+                id="looseTaskDescription" 
+                placeholder="Descrição (opcional)..."
+                class="task-description-input"
+                rows="2"></textarea>
+            <div class="task-extra-fields">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="looseTaskIsToday">
+                    <span>⭐ Tarefa do dia</span>
+                </label>
+                <label class="difficulty-label">
+                    <span>🎯 Dificuldade:</span>
+                    <select id="looseTaskDifficulty" class="difficulty-select">
+                        <option value="1">1 - Muito Fácil</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5" selected>5 - Média</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10 - Muito Difícil</option>
+                    </select>
+                </label>
+            </div>
+            <button onclick="addLooseTaskFromScreen()">+ Adicionar Tarefa</button>
         </div>
 
         <div class="loose-tasks-grid" id="looseTasksGrid"></div>

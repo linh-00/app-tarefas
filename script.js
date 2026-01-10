@@ -275,7 +275,6 @@ function goBackToMain() {
     document.getElementById('notesScreen').style.display = 'none';
     document.getElementById('noteViewScreen').style.display = 'none';
     previousScreen = 'mainScreen';
-    renderLooseTasks();
     updateTodayCount();
     updateLooseTaskCount();
     updateDateTime();
@@ -292,8 +291,8 @@ function goBackFromFolder() {
         renderFoldersManage();
     } else {
         document.getElementById('mainScreen').style.display = 'block';
-        renderLooseTasks();
         updateTodayCount();
+        updateLooseTaskCount();
         updateDateTime();
         updateFoldersCount();
         updateNotesCount();
@@ -583,11 +582,6 @@ function openTaskFromToday(folderId, taskId) {
     
     // Exibir comentários existentes
     displayTaskComments(task, 'todayModalCommentsList');
-    
-    // Botão de completar
-    const completeBtn = document.getElementById('todayModalCompleteBtn');
-    completeBtn.textContent = task.completed ? '✓ Concluída' : 'Concluir';
-    completeBtn.className = task.completed ? 'complete-btn completed' : 'complete-btn';
     
     // Abrir modal
     document.getElementById('todayTaskModal').style.display = 'block';
@@ -1193,6 +1187,45 @@ function addLooseTask() {
     saveData();
     renderLooseTasks();
     updateTodayCount();
+    
+    titleInput.value = '';
+    descInput.value = '';
+    isTodayInput.checked = false;
+    difficultyInput.value = '5';
+    titleInput.focus();
+}
+
+function addLooseTaskFromScreen() {
+    const titleInput = document.getElementById('looseTaskTitle');
+    const descInput = document.getElementById('looseTaskDescription');
+    const isTodayInput = document.getElementById('looseTaskIsToday');
+    const difficultyInput = document.getElementById('looseTaskDifficulty');
+    
+    const title = titleInput.value.trim();
+    const description = descInput.value.trim();
+    const isToday = isTodayInput.checked;
+    const difficulty = parseInt(difficultyInput.value);
+    
+    if (title === '') {
+        alert('Por favor, digite um título para a tarefa!');
+        return;
+    }
+    
+    const task = {
+        id: Date.now(),
+        title: title,
+        description: description,
+        completed: false,
+        isToday: isToday,
+        difficulty: difficulty,
+        status: 'pending'
+    };
+    
+    looseTasks.push(task);
+    saveData();
+    renderLooseTasksGrid();
+    updateTodayCount();
+    updateLooseTaskCount();
     
     titleInput.value = '';
     descInput.value = '';
