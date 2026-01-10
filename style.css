@@ -979,6 +979,31 @@ button:active {
 }
 
 /* Kanban Board */
+.kanban-search {
+    margin: 20px 0;
+}
+
+.kanban-search-input {
+    width: 100%;
+    padding: 14px 18px;
+    border: 2px solid #d1d9e6;
+    border-radius: 10px;
+    font-size: 16px;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.kanban-search-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.kanban-search-input::placeholder {
+    color: #a0a0a0;
+}
+
 .kanban-board {
     display: grid;
     grid-template-columns: repeat(4, 1fr);

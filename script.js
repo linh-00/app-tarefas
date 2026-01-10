@@ -1312,11 +1312,13 @@ function renderFolders() {
 function openKanbanBoard() {
     document.getElementById('mainScreen').style.display = 'none';
     document.getElementById('kanbanScreen').style.display = 'block';
+    document.getElementById('kanbanSearchInput').value = ''; // Limpar busca
     renderKanbanBoard();
 }
 
-function renderKanbanBoard() {
-    const allTasks = getAllTasksForKanban();
+function renderKanbanBoard(filteredTasks = null) {
+    const allTasks = filteredTasks || getAllTasksForKanban();
+    allKanbanTasks = getAllTasksForKanban(); // Armazenar todas as tarefas
     
     // Limpar colunas
     document.getElementById('pendingColumn').innerHTML = '';
@@ -1418,6 +1420,7 @@ function createKanbanCard(task, folderId, folderName) {
 let draggedKanbanTask = null;
 let draggedKanbanFolderId = null;
 let previousScreen = 'mainScreen'; // Rastrear tela anterior
+let allKanbanTasks = []; // Armazenar todas as tarefas para filtro
 
 function handleKanbanDragStart(event) {
     const card = event.target.closest('.kanban-card');
@@ -1486,6 +1489,21 @@ function updateTaskStatus(folderId, taskId, newStatus) {
         renderKanbanBoard();
         updateTodayCount();
     }
+}
+
+function filterKanbanTasks() {
+    const searchTerm = document.getElementById('kanbanSearchInput').value.toLowerCase().trim();
+    
+    if (searchTerm === '') {
+        renderKanbanBoard();
+        return;
+    }
+    
+    const filteredTasks = allKanbanTasks.filter(taskInfo => {
+        return taskInfo.task.title.toLowerCase().includes(searchTerm);
+    });
+    
+    renderKanbanBoard(filteredTasks);
 }
 
 function openTaskFromKanban(folderId, taskId) {
