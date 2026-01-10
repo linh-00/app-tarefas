@@ -70,13 +70,14 @@
         </div>
         
         <div class="folder-section">
-            <div class="input-container">
+            <h2 class="section-title">📂 Nova Pasta</h2>
+            <div class="input-container folder-input-container">
                 <input 
                     type="text" 
                     id="folderInput" 
-                    placeholder="Nome da pasta..."
+                    placeholder="Digite o nome da pasta..."
                     onkeypress="if(event.key === 'Enter') addFolder()">
-                <button onclick="addFolder()">📁 Criar Pasta</button>
+                <button class="folder-btn" onclick="addFolder()">📁 Criar Pasta</button>
             </div>
         </div>
 
@@ -146,7 +147,21 @@
             </div>
         </div>
 
-        <div id="foldersContainer"></div>
+        <div class="today-tasks-card" onclick="openFoldersScreen()" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <div class="today-card-icon">📂</div>
+            <div class="today-card-content">
+                <h3>Gerenciar Pastas</h3>
+                <p id="foldersCountCard">0 pastas</p>
+            </div>
+        </div>
+
+        <div class="today-tasks-card" onclick="openNotesScreen()" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+            <div class="today-card-icon">📝</div>
+            <div class="today-card-content">
+                <h3>Anotações</h3>
+                <p id="notesCount">0 anotações</p>
+            </div>
+        </div>
     </div>
 
     <!-- Tela da Pasta -->
@@ -354,6 +369,52 @@
                         <span class="bar-count">0</span>
                     </div>
                     <div class="chart-label">🎉 Concluída</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela de Gerenciar Pastas -->
+    <div class="container" id="foldersManageScreen" style="display: none;">
+        <div class="folder-header-screen">
+            <button class="back-btn" onclick="goBackToMain()">← Voltar</button>
+            <h1>📂 Gerenciar Pastas</h1>
+        </div>
+
+        <div class="folders-grid" id="foldersManageGrid"></div>
+    </div>
+
+    <!-- Tela de Anotações -->
+    <div class="container" id="notesScreen" style="display: none;">
+        <div class="folder-header-screen">
+            <button class="back-btn" onclick="goBackToMain()">← Voltar</button>
+            <h1>📝 Minhas Anotações</h1>
+            <button class="add-note-btn" onclick="openNoteModal()">+ Nova Anotação</button>
+        </div>
+
+        <div class="notes-grid" id="notesGrid"></div>
+    </div>
+
+    <!-- Modal de Anotação -->
+    <div id="noteModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeNoteModal()">&times;</span>
+            <h2 id="noteModalTitle">Nova Anotação</h2>
+            
+            <div class="note-form">
+                <label>
+                    <span>📌 Título:</span>
+                    <input type="text" id="noteTitleInput" placeholder="Digite o título da anotação..." class="note-input">
+                </label>
+                
+                <label>
+                    <span>📄 Descrição:</span>
+                    <textarea id="noteDescriptionInput" placeholder="Digite a descrição da anotação..." class="note-textarea" rows="6"></textarea>
+                </label>
+                
+                <div class="modal-actions">
+                    <button onclick="saveNote()" class="save-btn">💾 Salvar</button>
+                    <button onclick="closeNoteModal()" class="cancel-btn">Cancelar</button>
                 </div>
             </div>
         </div>

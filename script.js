@@ -21,10 +21,12 @@ try {
 // Carregar dados do localStorage
 let folders = JSON.parse(localStorage.getItem('folders')) || [];
 let looseTasks = JSON.parse(localStorage.getItem('looseTasks')) || [];
+let notes = [];
 let draggedTask = null;
 let draggedFrom = null;
 let currentFolderId = null;
 let currentTaskId = null;
+let currentNoteId = null;
 let currentUser = null;
 
 // Função para exibir comentários de uma tarefa
@@ -90,6 +92,8 @@ function showMainScreen() {
     document.getElementById('taskViewScreen').style.display = 'none';
     document.getElementById('todayTasksScreen').style.display = 'none';
     updateDateTime();
+    updateFoldersCount();
+    loadNotes();
 }
 
 function login() {
@@ -256,10 +260,13 @@ function goBackToMain() {
     document.getElementById('todayTasksScreen').style.display = 'none';
     document.getElementById('kanbanScreen').style.display = 'none';
     document.getElementById('dashboardScreen').style.display = 'none';
-    renderFolders();
+    document.getElementById('foldersManageScreen').style.display = 'none';
+    document.getElementById('notesScreen').style.display = 'none';
     renderLooseTasks();
     updateTodayCount();
     updateDateTime();
+    updateFoldersCount();
+    updateNotesCount();
 }
 
 function openTodayTasks() {
@@ -1697,6 +1704,219 @@ function markTaskCompleted(task) {
         task.completedDate = new Date().toISOString();
         recordTaskCompletion();
     }
+}
+
+// ========== GERENCIAR PASTAS ==========
+
+function openFoldersScreen() {
+    document.getElementById('mainScreen').style.display = 'none';
+    document.getElementById('foldersManageScreen').style.display = 'block';
+    renderFoldersManage();
+    updateFoldersCount();
+}
+
+function renderFoldersManage() {
+    const grid = document.getElementById('foldersManageGrid');
+    
+    if (folders.length === 0) {
+        grid.innerHTML = '<div class="empty-notes">📂 Nenhuma pasta criada ainda.<br>Crie pastas na tela principal!</div>';
+        return;
+    }
+    
+    grid.innerHTML = folders.map(folder => {
+        const totalTasks = folder.tasks.length;
+        const completedTasks = folder.tasks.filter(t => t.completed).length;
+        
+        return `
+            <div class="folder-card">
+                <div class="folder-card-header">
+                    <div>
+                        <div class="folder-card-title">📁 ${folder.name}</div>
+                        <div class="folder-card-count">
+                            <span class="count-badge">📝 ${totalTasks} ${totalTasks === 1 ? 'tarefa' : 'tarefas'}</span>
+                            ${completedTasks > 0 ? `<span class="count-badge completed-badge">✓ ${completedTasks} concluída${completedTasks === 1 ? '' : 's'}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="folder-card-actions">
+                        <button class="open-folder-btn" onclick="openFolder(${folder.id})">Abrir</button>
+                        <button class="delete-card-btn" onclick="deleteFolder(${folder.id})">Excluir</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function updateFoldersCount() {
+    const countEl = document.getElementById('foldersCountCard');
+    if (countEl) {
+        const count = folders.length;
+        countEl.textContent = `${count} pasta${count !== 1 ? 's' : ''}`;
+    }
+}
+
+// ========== ANOTAÇÕES ==========
+
+function openNotesScreen() {
+    document.getElementById('mainScreen').style.display = 'none';
+    document.getElementById('notesScreen').style.display = 'block';
+    loadNotes();
+}
+
+function loadNotes() {
+    if (!currentUser) return;
+    
+    const notesKey = `notes_${currentUser}`;
+    const storedNotes = localStorage.getItem(notesKey);
+    
+    if (storedNotes) {
+        notes = JSON.parse(storedNotes);
+    } else {
+        notes = [];
+    }
+    
+    // Carregar do Firebase
+    if (db) {
+        db.collection('users').doc(currentUser).get()
+            .then(doc => {
+                if (doc.exists && doc.data().notes) {
+                    notes = doc.data().notes;
+                    localStorage.setItem(notesKey, JSON.stringify(notes));
+                    renderNotes();
+                    updateNotesCount();
+                }
+            })
+            .catch(error => {
+                console.error('❌ Erro ao carregar anotações do Firebase:', error);
+            });
+    }
+    
+    renderNotes();
+    updateNotesCount();
+}
+
+function saveNotesData() {
+    if (!currentUser) return;
+    
+    const notesKey = `notes_${currentUser}`;
+    localStorage.setItem(notesKey, JSON.stringify(notes));
+    
+    // Salvar no Firebase
+    if (db) {
+        db.collection('users').doc(currentUser).set({
+            notes: notes
+        }, { merge: true })
+        .then(() => {
+            console.log('✅ Anotações salvas no Firebase');
+        })
+        .catch(error => {
+            console.error('❌ Erro ao salvar anotações:', error);
+        });
+    }
+}
+
+function renderNotes() {
+    const grid = document.getElementById('notesGrid');
+    
+    if (notes.length === 0) {
+        grid.innerHTML = '<div class="empty-notes">📝 Nenhuma anotação ainda.<br>Clique em "Nova Anotação" para começar!</div>';
+        return;
+    }
+    
+    grid.innerHTML = notes.map(note => `
+        <div class="note-card">
+            <div class="note-card-header">
+                <div class="note-card-title">${note.title}</div>
+                <div class="note-card-actions">
+                    <button class="note-edit-btn" onclick="editNote(${note.id})">✏️ Editar</button>
+                    <button class="note-delete-btn" onclick="deleteNote(${note.id})">🗑️ Excluir</button>
+                </div>
+            </div>
+            <div class="note-card-description">${note.description}</div>
+            <div class="note-card-date">📅 ${new Date(note.createdAt).toLocaleString('pt-BR')}</div>
+        </div>
+    `).join('');
+}
+
+function updateNotesCount() {
+    const countEl = document.getElementById('notesCount');
+    if (countEl) {
+        const count = notes.length;
+        countEl.textContent = `${count} anotaç${count !== 1 ? 'ões' : 'ão'}`;
+    }
+}
+
+function openNoteModal() {
+    currentNoteId = null;
+    document.getElementById('noteModalTitle').textContent = 'Nova Anotação';
+    document.getElementById('noteTitleInput').value = '';
+    document.getElementById('noteDescriptionInput').value = '';
+    document.getElementById('noteModal').style.display = 'block';
+}
+
+function closeNoteModal() {
+    document.getElementById('noteModal').style.display = 'none';
+    currentNoteId = null;
+}
+
+function saveNote() {
+    const title = document.getElementById('noteTitleInput').value.trim();
+    const description = document.getElementById('noteDescriptionInput').value.trim();
+    
+    if (!title) {
+        alert('❌ Por favor, digite um título para a anotação!');
+        return;
+    }
+    
+    if (!description) {
+        alert('❌ Por favor, digite uma descrição para a anotação!');
+        return;
+    }
+    
+    if (currentNoteId !== null) {
+        // Editar anotação existente
+        const note = notes.find(n => n.id === currentNoteId);
+        if (note) {
+            note.title = title;
+            note.description = description;
+            note.updatedAt = new Date().toISOString();
+        }
+    } else {
+        // Criar nova anotação
+        const newNote = {
+            id: Date.now(),
+            title: title,
+            description: description,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        notes.push(newNote);
+    }
+    
+    saveNotesData();
+    renderNotes();
+    updateNotesCount();
+    closeNoteModal();
+}
+
+function editNote(noteId) {
+    const note = notes.find(n => n.id === noteId);
+    if (!note) return;
+    
+    currentNoteId = noteId;
+    document.getElementById('noteModalTitle').textContent = 'Editar Anotação';
+    document.getElementById('noteTitleInput').value = note.title;
+    document.getElementById('noteDescriptionInput').value = note.description;
+    document.getElementById('noteModal').style.display = 'block';
+}
+
+function deleteNote(noteId) {
+    if (!confirm('Tem certeza que deseja excluir esta anotação?')) return;
+    
+    notes = notes.filter(n => n.id !== noteId);
+    saveNotesData();
+    renderNotes();
+    updateNotesCount();
 }
 
 // Iniciar aplicação
